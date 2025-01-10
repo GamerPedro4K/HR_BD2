@@ -1,0 +1,53 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@nuxtjs/dotenv": "^1.4.2",
+    "@nuxtjs/tailwindcss": "^6.12.2",
+    "@primevue/forms": "^4.2.4",
+    "@primevue/themes": "^4.2.1",
+    "@schedule-x/event-modal": "^2.12.1",
+    "@schedule-x/events-service": "^2.10.0",
+    "@schedule-x/resize": "^2.10.0",
+    "@schedule-x/scroll-controller": "^2.10.0",
+    "@schedule-x/theme-default": "^2.10.0",
+    "@schedule-x/vue": "^2.9.0",
+    "@vee-validate/zod": "^4.14.7",
+    "@vesp/nuxt-fontawesome": "^1.1.0",
+    "chart.js": "^4.4.6",
+    "gsap": "^3.12.5",
+    "jwt-decode": "^4.0.0",
+    "lodash-es": "^4.17.21",
+    "nuxt": "^3.14.159",
+    "primeflex": "^3.3.1",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.2.1",
+    "tailwindcss-primeui": "^0.3.4",
+    "three": "^0.170.0",
+    "vee-validate": "^4.14.7",
+    "vue": "latest",
+    "vue-router": "latest",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@fortawesome/free-brands-svg-icons": "^6.6.0",
+    "@fortawesome/free-regular-svg-icons": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@primevue/nuxt-module": "^4.2.1",
+    "@types/lodash-es": "^4.17.12",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "sass": "1.32.13",
+    "tailwindcss": "^3.4.14"
+  }
+}

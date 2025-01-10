@@ -1,0 +1,17 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/__pycache__.*": true,
+    "backend\\env": true,
+    "backend\\HrManagement\\api\\__init__.py": true,
+    "backend\\HrManagement\\api\\admin.py": true,
+    "backend\\HrManagement\\api\\apps.py": true,
+    "backend\\HrManagement\\api\\tests.py": true,
+    "backend\\HrManagement\\HrManagement\\__init__.py": true,
+    "backend\\HrManagement\\HrManagement\\asgi.py": true,
+    "backend\\HrManagement\\HrManagement\\wsgi.py": true,
+    "backend\\HrManagement\\manage.py": true,
+    "backend\\HrManagement\\api\\migrations\\__init__.py": true,
+    "backend\\HrManagement\\api\\management\\commands\\seeders\\__init__.py": true
+  }
+}
