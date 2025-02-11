@@ -45,7 +45,7 @@ def seed(quantity=100):
         quantity = min(quantity, len(employees))
         
         for _ in range(quantity):
-            if random.random() < 0.14:
+            if random.random() < 0.60:
                 id_employee = employees[_]
                 id_training_type = fake.random_element(elements=training_types)
                 start_date = fake.date_this_year()

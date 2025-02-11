@@ -3,7 +3,92 @@ import { useLayout } from '~/layouts/composables/layout';
 import AppConfigurator from './AppConfigurator.vue';
 import AppUser from '~/components/AppUser.vue';
 
+import { useEmployee } from '~/composables/useEmployee';
+import { ref } from 'vue';
+
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
+
+const { getCheckInStatus, isCheckedHandler, postCheckInOrChekOut } = useEmployee();
+
+const checkInStatus = ref(isCheckedHandler.loading);
+/*  ring-primary */
+const composition = ref({
+    text: 'Loading...',
+    icon: 'pi pi-spin pi-spinner',
+    class: '',
+    severity: 'info'
+});
+
+const evaluate = (response) => {
+    checkInStatus.value = response;
+    switch (response) {
+        case isCheckedHandler.checked_in:
+            composition.value = {
+                text: 'Check-in',
+                icon: 'pi pi-sign-in',
+                class: 'text-primary',
+                severity: 'success'
+            };
+            break;
+        case isCheckedHandler.checked_out:
+            composition.value = {
+                text: 'Check-out',
+                icon: 'pi pi-sign-out',
+                class: 'text-warning ',
+                severity: 'warn'
+            };
+            break;
+        case isCheckedHandler.error:
+            composition.value = {
+                text: 'Error',
+                icon: 'pi pi-exclamation-triangle',
+                class: 'text-error',
+                severity: 'danger'
+            };
+            break;
+        default:
+            composition.value = {
+                text: 'Loading...',
+                icon: 'pi pi-spin pi-spinner',
+                class: ' ',
+                severity: 'info'
+            };
+            break;
+    }
+}
+
+getCheckInStatus().then((response) => {
+    evaluate(response);
+});
+
+
+
+const checkButton = () => {
+    try {
+        if (checkInStatus.value === isCheckedHandler.error) {
+            getCheckInStatus().then((response) => {
+                evaluate(response);
+            });
+            return;
+        }
+        if (checkInStatus.value === isCheckedHandler.loading) return;
+        if (checkInStatus.value === isCheckedHandler.checked_in) {
+            postCheckInOrChekOut(true).then((response) => {
+                evaluate(response);
+            });
+            return;
+        } else {
+            postCheckInOrChekOut(false).then((response) => {
+                evaluate(response);
+            });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+};
+
 </script>
 
 <template>
@@ -27,6 +112,17 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
 
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
+                <div class="relative">
+                    <Button 
+                        type="button"
+                        :class="composition.class"
+                        :severity="composition.severity"
+                        @click="checkButton"
+                    >
+                        <span class="font-bold">{{ composition.text }}</span>
+                        <i :class="composition.icon"></i>
+                    </Button>
+                </div>
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
@@ -40,10 +136,6 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
                     </button>
                     <AppConfigurator />
                 </div>
-                <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
-                </button>
                 <div class="relative">
                     <button 
                         v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"

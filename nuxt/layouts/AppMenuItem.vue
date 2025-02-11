@@ -64,8 +64,17 @@ function itemClick(event, item) {
 }
 
 function checkActiveRoute(item) {
-    return route.path === item.to;
+    let rtemp = route.path; 
+    let itemtemp = item.to;
+    
+    if(route.path ==  item.to ) return true;
+
+    rtemp = route.path.replace('/dashboard', '');
+    itemtemp = item.to.replace('/dashboard', '');
+
+    return  new RegExp(`${itemtemp}`).test(rtemp) && itemtemp !== '';
 }
+
 </script>
 
 <template>

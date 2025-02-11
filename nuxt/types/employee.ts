@@ -30,6 +30,7 @@ export interface EmployeeQueryParams {
 
 export interface EmployeeSubmission {
     employee: {
+      id_employee: string | null | undefined;
       username: string;
       password: string;
       first_name: string;
@@ -57,8 +58,8 @@ export interface EmployeeSubmission {
       name: string;
     }[];
     vacations:{
-      start_date: string | Date;
-      end_date: string | Date;
+      start_date: string | Date | undefined;
+      end_date: string | Date | undefined;
     };
     salary:{
       base_salary: number,

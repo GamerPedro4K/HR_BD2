@@ -14,11 +14,12 @@ export function useContractType() {
         return token ? { Authorization: `Bearer ${token}` } : undefined;
     };
 
+   
     const getContractTypes = async (params: ContractTypeQueryParams): Promise<ContractTypeListResponse> => {
         try {
             const config = useRuntimeConfig();
             const query = new URLSearchParams(Object.entries(params)).toString();
-            const response = await $fetch<ContractTypeListResponse>(`${config.public.apiUrl}/api/contract_types/?${query}`, {
+            const response = await $fetch<ContractTypeListResponse>(`${config.public.apiUrl}api/contract_types/?${query}`, {
                 method: 'GET',
                 headers: getAuthHeaders(),
             });
@@ -26,15 +27,15 @@ export function useContractType() {
             return response || { contract_types: [], total_count: 0 };
         } catch (error) {
             console.error(error);
-            $toast.add(message.errorConnection);
-            return { contract_types: [] };
+            return { contract_types: [], total_count: 0 };
         }
     };
+
 
     const getContractType = async (id: string): Promise<ContractType | null>   => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch<ContractType>(`${config.public.apiUrl}/api/contract_types/${id}`, {
+            const response = await $fetch<ContractType>(`${config.public.apiUrl}/api/contract_types/${id}/`, {
                 method: 'GET',
                 headers: getAuthHeaders(),
             });
@@ -71,7 +72,7 @@ export function useContractType() {
     const updateContractType = async (id: string, data: any) => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch(`${config.public.apiUrl}/api/contract_types/${id}`, {
+            const response = await $fetch(`${config.public.apiUrl}/api/contract_types/${id}/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,18 +90,21 @@ export function useContractType() {
         }
     };
 
-    const deleteContractType = async (id: string) => {
+    const deleteContractType = async (id: string, bulk: boolean) => {
         try {
             const config = useRuntimeConfig();
-            await $fetch(`${config.public.apiUrl}/api/contract_types/${id}`, {
+            await $fetch(`${config.public.apiUrl}api/contract_types/${id}/`, {
                 method: 'DELETE',
                 headers: getAuthHeaders(),
             });
 
-            $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de contrato excluído', life: 3000 });
+            if(!bulk)
+                $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de contrato excluído', life: 3000 });
+            return true;
         } catch (error) {
             console.error(error);
             $toast.add(message.errorGeneric);
+            return false;
         }
     };
 

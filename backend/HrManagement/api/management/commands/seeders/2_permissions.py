@@ -123,6 +123,39 @@ PERMISSIONS = [
     ("create_bonus", "Pode criar um bônus"),
     ("update_bonus", "Pode atualizar um bônus"),
     ("delete_bonus", "Pode deletar um bônus"),
+    
+    ## Cargos (Roles)
+    ("view_all_roles", "Pode visualizar todos os cargos"),
+    ("view_role", "Pode visualizar um cargo"),
+    ("create_role", "Pode criar um cargo"),
+    ("update_role", "Pode atualizar um cargo"),
+    ("delete_role", "Pode deletar um cargo"),
+
+    ## contract_state_contract
+    ("view_all_contract_states", "Pode visualizar todos os contratos de estado contratual"),
+    ("view_contract_state_contract", "Pode visualizar um contrato de estado contratual"),
+    ("create_contract_state_contract", "Pode criar um contrato de estado contratual"),
+    ("update_contract_state_contract", "Pode atualizar um contrato de estado contratual"),
+    ("delete_contract_state_contract", "Pode deletar um contrato de estado contratual"),
+    
+    ## Grupos de Autenticação
+    ("view_all_auth_groups", "Pode visualizar todos os grupos de autenticação"),
+    ("view_auth_group", "Pode visualizar um grupo de autenticação"),
+    ("create_auth_group", "Pode criar um grupo de autenticação"),
+    ("update_auth_group", "Pode atualizar um grupo de autenticação"),
+    ("delete_auth_group", "Pode deletar um grupo de autenticação"),
+    
+    ## Permissões
+    ("view_all_permissions", "Pode visualizar todas as permissões"),
+    ("add_group_permissions", "Pode adicionar permissões a um grupo"),
+    ("delete_group_permissions", "Pode deletar permissões de um grupo"),
+
+    ## analytics
+    ("view_analytics", "Pode visualizar as análises"),
+    
+    ## Permissoes User Grupo
+    ("view_all_permissions_user_group", "Pode visualizar todas as permissões de utilizador de grupo"),
+    
 ]
 
 DEFAULT_CONTENT_TYPE_ID = 5

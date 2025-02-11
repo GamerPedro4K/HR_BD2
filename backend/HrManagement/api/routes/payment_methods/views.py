@@ -29,38 +29,53 @@ class PaymentMethodViewSet(ViewSet):
     @check_permission_decorator('view_all_payment_methods')
     def list(self, request):
         """
-        List all payment methods with optional name filtering, pagination.
+        List all payment methods with optional filtering and pagination.
         """
-        name = request.GET.get('name', None)
-        limit = int(request.GET.get('limit', 10))
-        offset = int(request.GET.get('offset', 0))
+        order_by = request.GET.get('order_by', 'name')
+        order_direction = request.GET.get('order_direction', 'ASC')
+        global_search = request.GET.get('global_search', None)
+        limit = request.GET.get('limit', None)
+        offset = request.GET.get('offset', None)
 
         with connection.cursor() as cursor:
             try:
-                cursor.execute(
-                    """
-                    SELECT id_payment_method, name, description, icon, hex_color
-                    FROM payment_methods
-                    WHERE (%s IS NULL OR name ILIKE %s)
-                    LIMIT %s OFFSET %s;
-                    """,
-                    [name, f"%{name}%" if name else None, limit, offset]
-                )
+                limit = int(limit) if limit else None
+                offset = int(offset) if offset else None
+
+                query = """
+                    SELECT *
+                    FROM get_all_payment_methods(
+                        %s::varchar,         -- global_search_param
+                        ARRAY[%s]::text[],   -- order_by_param
+                        ARRAY[%s]::text[],   -- order_direction_param
+                        %s::integer,         -- limit_param
+                        %s::integer          -- offset_param
+                    )
+                """
+                params = [global_search, order_by, order_direction, limit, offset]
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                payment_methods = []
+                total_count = rows[0][-1] if rows else 0  # Last field is total_count
+
+                for row in rows:
+                    payment_methods.append({
+                        'id_payment_method': row[0],
+                        'name': row[1],
+                        'description': row[2],
+                        'icon': row[3],
+                        'hex_color': row[4]
+                    })
+
+                return Response({
+                    'payment_methods': payment_methods,
+                    'total_count': total_count
+                }, status=status.HTTP_200_OK)
+
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        payment_methods = [
-            {
-                'id_payment_method': row[0],
-                'name': row[1],
-                'description': row[2],
-                'icon': row[3],
-                'hex_color': row[4],
-            }
-            for row in rows
-        ]
-        return Response({'payment_methods': payment_methods}, status=status.HTTP_200_OK)
 
         
     @check_permission_decorator('view_payment_method')

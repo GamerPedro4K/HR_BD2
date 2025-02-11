@@ -11,11 +11,32 @@ const model = ref([
     {
         label: 'Gestão',
         items: [
-            { label: 'Todos os funcionários', icon: 'pi pi-fw pi-id-card', to: '/dashboard/employee' },
-            { label: 'Todos os departamentos', icon: 'pi pi-fw pi-users', to: '/dashboard/departments' },
+            { label: 'Funcionários', icon: 'pi pi-fw pi-id-card', to: '/dashboard/employee' },
+            { label: 'Departamentos', icon: 'pi pi-fw pi-users', to: '/dashboard/departments' },
+            { label: 'Cargos', icon: 'pi pi-fw pi-users', to: '/dashboard/roles' },
         ]
     },
     {
+        label: 'Categorias',
+        items: [
+            { label: 'Tipos de Formações', icon: 'pi pi-fw pi-id-card', to: '/dashboard/trainings' },
+            { label: 'Tipos de contratos', icon: 'pi pi-fw pi-id-card', to: '/dashboard/tipo-contrato' },
+            { label: 'Estado dos contratos', icon: 'pi pi-fw pi-id-card', to: '/dashboard/estado-contrato' },
+            { label: 'Estado de saída', icon: 'pi pi-fw pi-id-card', to: '/dashboard/estado-saida' },
+            { label: 'Tipo de pagamento', icon: 'pi pi-fw pi-id-card', to: '/dashboard/tipo-pagamento' },
+            { label: 'Tipo de benefícios', icon: 'pi pi-fw pi-id-card', to: '/dashboard/tipo-beneficios' },
+            { label: 'Tipo de certificado', icon: 'pi pi-fw pi-id-card', to: '/dashboard/tipo-certificados' },
+        ]
+    },
+    {
+        label: 'Permissões',
+        items: [
+            { label: 'Grupos', icon: 'pi pi-fw pi-id-card', to: '/dashboard/grupos' },
+            { label: 'Permissões', icon: 'pi pi-fw pi-id-card', to: '/dashboard/permissoes' },
+            { label: 'Utilizadores', icon: 'pi pi-fw pi-id-card', to: '/dashboard/permission-grupo' },
+        ]
+    }
+    /* {
         label: 'Pages',
         icon: 'pi pi-fw pi-briefcase',
         to: '/pages',
@@ -57,7 +78,7 @@ const model = ref([
                 to: '/pages/empty'
             }
         ]
-    },
+    }, */
 ]);
 </script>
 

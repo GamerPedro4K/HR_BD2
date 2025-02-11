@@ -94,7 +94,7 @@ def seed(quantity=100):
 
             # Create the employee record
             phone = fake.phone_number()
-            src = f"https://picsum.photos/300/300?random={fake.random_digit}"
+            src = f"https://picsum.photos/300/300?random={fake.uuid4()}"
             birth_date = fake.date_of_birth(minimum_age=18, maximum_age=65)
             cursor.execute(
                 """

@@ -24,9 +24,24 @@ class AttendanceViewSet(ViewSet):
         db = get_mongo_db()
         collection = db['attendance']
 
-        documents = list(collection.find({}, {'_id': 0})) 
+        offset = int(request.query_params.get('offset', 0))  
+        limit = int(request.query_params.get('limit', 10)) 
 
-        return Response(documents, status=status.HTTP_200_OK)
+        offset = 1 if offset < 1 else offset
+        limit = 10 if limit < 1 else limit
+
+        skip = offset - 1
+        documents = list(collection.find({}, {'_id': 0}).skip(skip).limit(limit))
+
+        count = collection.count_documents({})
+
+        # Construir resposta paginada
+        response_data = {
+            'data': documents,
+            'count': count
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
     """
         Retrieve by date e.g attendance/2024-12-26/ or by id_employee e.g attendance/687544c7-07a8-404b-b011-a4653d3329c7
@@ -38,12 +53,23 @@ class AttendanceViewSet(ViewSet):
         collection = db['attendance']
 
         try:
-            date = datetime.strptime(pk, "%Y-%m-%d").date() # if not valid, raise ValueError
-            documents = list(collection.find({'date': pk}, {'_id': 0}))
+            offset = int(request.query_params.get('offset', 0))  
+            limit = int(request.query_params.get('limit', 10)) 
+
+            offset = 1 if offset < 1 else offset
+            limit = 10 if limit < 1 else limit
+
+            skip = offset - 1
+            documents = list(collection.find({'id_employee': pk}, {'_id': 0}).skip(skip).limit(limit))
+            count = collection.count_documents({'id_employee': pk})
+
             if documents:
-                return Response(documents, status=status.HTTP_200_OK)
+                return Response({
+                    'data': documents,
+                    'count': count
+                }, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'No records found for the given date'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': 'No records found for the given id_employee'}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             #id_employee PostgreSQL
             documents = list(collection.find({'id_employee': pk}, {'_id': 0}))
@@ -56,11 +82,63 @@ class AttendanceViewSet(ViewSet):
     def create(self, request):
         db = get_mongo_db()
         collection = db['attendance']
+        date = datetime.now().date()
 
         try:
             data = request.data
-            result = collection.insert_one(data)
-            return Response({'id': str(result.inserted_id)}, status=status.HTTP_201_CREATED)
+            id_employee = request.auth['sub']
+            date = datetime.now().date().strftime("%Y-%m-%d")
+            print(date)
+
+            existing_record = collection.find_one({"id_employee": id_employee, "date": date})
+
+            if existing_record:
+                sessions = existing_record.get('sessions', [])
+
+                if 'checkin' in data:
+                    """ for session in sessions:
+                        last_checkin_time = datetime.strptime(session['checkin'], "%H:%M:%S")
+                        new_checkin_time = datetime.strptime(data['checkin'], "%H:%M:%S")
+
+                        if abs((new_checkin_time - last_checkin_time).total_seconds()) < 180:
+                            return Response({'detail': 'Check-in já registrado recentemente para essa data.'}, status=status.HTTP_200_OK) """
+
+                    new_session = {
+                        'checkin': data['checkin'],
+                        'checkout': None  
+                    }
+                    sessions.append(new_session)
+
+                elif 'checkout' in data:
+                    for session in sessions:
+                        if 'checkin' in session and session['checkout'] is None:
+                            session['checkout'] = data['checkout']
+                            break
+                
+                collection.update_one(
+                    {"_id": existing_record["_id"]},
+                    {"$set": {"sessions": sessions}}
+                )
+                return Response({'detail': 'Sessão atualizada com sucesso!'}, status=status.HTTP_200_OK)
+
+            else:
+                if 'checkin' not in data:
+                    return Response({'detail': 'O check-in é obrigatório ao criar uma nova entrada.'}, status=status.HTTP_400_BAD_REQUEST)
+
+                new_session = {
+                    'checkin': data['checkin'],
+                    'checkout': None
+                }
+
+                new_data = {
+                    'id_employee': id_employee,
+                    'date': date,
+                    'sessions': [new_session]  
+                }
+
+                result = collection.insert_one(new_data)
+                return Response({'id': str(result.inserted_id)}, status=status.HTTP_201_CREATED)
+
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -101,12 +179,24 @@ class AttendanceViewSet(ViewSet):
             if request.method == 'GET':
                 check_permission(request.user, 'view_attendance')
 
-                # Buscar o documento usando id_employee e a data
                 document = collection.find_one({'id_employee': id_employee, 'date': date.isoformat()}, {'_id': 0})
                 if document:
+                    is_checkin = False
+                    for session in document['sessions']:
+                        if session['checkin'] and not session.get('checkout'):
+                            is_checkin = True
+                            break
+
+                    document['is_chekin'] = is_checkin
                     return Response(document, status=status.HTTP_200_OK)
                 else:
-                    return Response({'detail': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
+                    document = {
+                        'id_employee': id_employee,
+                        'date': date.isoformat(),
+                        'is_chekin': False,
+                        'sessions': []
+                    }
+                    return Response(document, status=status.HTTP_200_OK)
 
             elif request.method == 'DELETE':
                 check_permission(request.user, 'delete_attendance')

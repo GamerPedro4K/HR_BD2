@@ -16,6 +16,26 @@ export function useAuth() {
         errorCredentials: { severity: 'error', summary: 'Credenciais inválidas', detail: 'Verifique o email e a palavra-passe', life: 3000 }
     };
 
+
+    const getSubFromToken = (): string | null => {
+            const token = localStorage.getItem('access_token');
+            if (!token) return null;
+    
+            const payload = token.split('.')[1];
+            if (!payload) return null;
+    
+    
+            const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    
+            try {
+                const parsedPayload = JSON.parse(decodedPayload);
+                return parsedPayload.sub || null;
+            } catch (error) {
+                console.error('Erro ao decodificar o token:', error);
+                return null;
+            }
+        };
+
     const login = async (email: string, password: string) => {
         try {
             $loadingIndicator.start();
@@ -105,7 +125,7 @@ export function useAuth() {
     const getUserPermissions = async (): Promise<string[]> => {
         try {
             const config = useRuntimeConfig();
-            const { data, error } = await useFetch<{ permissions: string[] }>(`${config.public.apiUrl}/api/permissions/`, {
+            const { data, error } = await useFetch<{ permissions: string[] }>(`${config.public.apiUrl}api/user_permissions/`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -130,5 +150,5 @@ export function useAuth() {
     };
     
 
-    return { login, logout, isTokenValid, getUserPermissions, hasPermission };
+    return { login, logout, isTokenValid, getUserPermissions, hasPermission, getSubFromToken };
 }

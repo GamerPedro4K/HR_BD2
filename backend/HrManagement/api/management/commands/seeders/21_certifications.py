@@ -43,7 +43,7 @@ def seed(quantity=100):
         quantity = min(quantity, len(employees))
         
         for _ in range(quantity):
-            if random.random() < 0.45:
+            if random.random() < 0.65:
                 for _ in range(random.randint(1, 2)):
                     if _ == 2 and random.random() < 0.5:
                         break

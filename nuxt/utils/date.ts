@@ -64,6 +64,7 @@ export function formatDate(
   }
 
   export function formatDateRequest(date: Date | undefined) {
+    if(date === undefined) return undefined;
     return date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]; // Convert to YYYY-MM-DD
   };
   

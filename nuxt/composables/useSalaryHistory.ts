@@ -31,10 +31,10 @@ export function useSalaryHistory() {
         }
     };
 
-    const getSalaryHistory = async (id: string): Promise<SalaryHistory | null> => {
+    const getSalaryHistory = async (id: string): Promise<SalaryHistory[] | null> => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch<SalaryHistory>(`${config.public.apiUrl}/api/salary_history?id_employee=${id}`, {
+            const response = await $fetch<SalaryHistory[]>(`${config.public.apiUrl}/api/salary_history?id_employee=${id}`, {
                 method: 'GET',
                 headers: getAuthHeaders(),
             });

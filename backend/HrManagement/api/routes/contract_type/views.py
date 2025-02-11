@@ -26,44 +26,58 @@ class ContractTypeViewSet(ViewSet):
         authentication_classes = [JWTAuthentication]
         permission_classes = [IsAuthenticated]
         
-        
+    
     @check_permission_decorator('view_all_contract_types')
     def list(self, request):
         """
         List all contract types with optional filtering and pagination.
         """
-        contract_type_name = request.GET.get('contract_type_name', None)
-        limit = int(request.GET.get('limit', 10))
-        offset = int(request.GET.get('offset', 0))
+        order_by = request.GET.get('order_by', 'contract_type_name')
+        order_direction = request.GET.get('order_direction', 'ASC')
+        global_search = request.GET.get('global_search', None)
+        limit = request.GET.get('limit', None)
+        offset = request.GET.get('offset', None)
 
         with connection.cursor() as cursor:
             try:
-                cursor.execute(
-                    """
-                    SELECT id_contract_type, contract_type_name, description, 
-                           termination_notice_period, overtime_eligible, benefits_eligible
-                    FROM contract_type
-                    WHERE (%s IS NULL OR contract_type_name ILIKE %s)
-                    LIMIT %s OFFSET %s;
-                    """,
-                    [contract_type_name, f"%{contract_type_name}%" if contract_type_name else None, limit, offset]
-                )
+                limit = int(limit) if limit else None
+                offset = int(offset) if offset else None
+
+                query = """
+                    SELECT *
+                    FROM get_all_contract_types(
+                        %s::varchar,         -- global_search_param
+                        ARRAY[%s]::text[],   -- order_by_param
+                        ARRAY[%s]::text[],   -- order_direction_param
+                        %s::integer,         -- limit_param
+                        %s::integer          -- offset_param
+                    )
+                """
+                params = [global_search, order_by, order_direction, limit, offset]
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                contract_types = []
+                total_count = rows[0][-1] if rows else 0  # O último campo é o total_count
+
+                for row in rows:
+                    contract_types.append({
+                        'id_contract_type': row[0],
+                        'contract_type_name': row[1],
+                        'description': row[2],
+                        'termination_notice_period': row[3],
+                        'overtime_eligible': row[4],
+                        'benefits_eligible': row[5]
+                    })
+
+                return Response({
+                    'contract_types': contract_types,
+                    'total_count': total_count
+                }, status=status.HTTP_200_OK)
+
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        contract_types = [
-            {
-                'id_contract_type': row[0],
-                'contract_type_name': row[1],
-                'description': row[2],
-                'termination_notice_period': row[3],
-                'overtime_eligible': row[4],
-                'benefits_eligible': row[5],
-            }
-            for row in rows
-        ]
-        return Response({'contract_types': contract_types}, status=status.HTTP_200_OK)
 
     
     @check_permission_decorator('view_contract_type')

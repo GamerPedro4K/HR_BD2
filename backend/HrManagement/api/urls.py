@@ -12,14 +12,22 @@ from .routes.contract_leave_type.views import ContractLeaveTypeViewSet
 from .routes.departments.views import DepartmentViewSet
 from .routes.contract_type.views import ContractTypeViewSet
 from .routes.vacations.views import VacationsViewSet
-from .routes.permissions.views import UserPermissionsViewSet
+from .routes.user_permissions.views import UserPermissionsViewSet
 from .routes.absence_reason.views import AbsenceReasonViewSet
 from .routes.salary_history.views import SalaryHistoryViewSet
 from .routes.deductions.views import DeductionsViewSet
 from .routes.bonuses.views import BonusesViewSet
 from .routes.payments.views import PaymentsViewSet
+from .routes.roles.views import RolesViewSet
+from .routes.contract_state_contract.views import ContractStateContractViewSet
+from .routes.auth_groups.views import AuthGroupViewSet
+from .routes.permissions.views import PermissionsViewSet
+from .routes.analytics.views import AnalyticsViewSet
+from .routes.group_permissions_user.views import GroupPermissionsViewUserSet
 
 router = DefaultRouter()
+router.register(r'analytics', AnalyticsViewSet, basename='analytics')
+router.register(r'contract_state_contracts', ContractStateContractViewSet, basename='contract_state_contract')
 router.register(r'payments', PaymentsViewSet, basename='payments')
 router.register(r'bonuses', BonusesViewSet, basename='bonuses')
 router.register(r'deductions', DeductionsViewSet, basename='deductions')
@@ -38,6 +46,10 @@ router.register(r'contract_states', ContractStateViewSet, basename='contract_sta
 router.register(r'contract_leave_types', ContractLeaveTypeViewSet, basename='contract_leave_type')
 router.register(r'departments', DepartmentViewSet, basename='department')
 router.register(r'contract_types', ContractTypeViewSet, basename='contract_type')
-router.register(r'permissions', UserPermissionsViewSet, basename='permissions')
+router.register(r'user_permissions', UserPermissionsViewSet, basename='user_permissions')
+router.register(r'roles', RolesViewSet, basename='roles')
+router.register(r'authgroup', AuthGroupViewSet, basename='authgroup')
+router.register(r'permissions', PermissionsViewSet, basename='permissions')
+router.register(r'permissions_user_group', GroupPermissionsViewUserSet, basename='permissions_user_group')
 
 urlpatterns = router.urls

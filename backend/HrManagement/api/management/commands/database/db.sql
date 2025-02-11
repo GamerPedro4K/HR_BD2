@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS training_type_role (
     id_training_type UUID NOT NULL,
     id_role UUID NOT NULL,
     PRIMARY KEY (id_training_type, id_role),
-    FOREIGN KEY (id_training_type) REFERENCES training_types(id_training_type),
+    FOREIGN KEY (id_training_type) REFERENCES training_types(id_training_type) ON DELETE CASCADE,
     FOREIGN KEY (id_role) REFERENCES roles(id_role),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -162,19 +162,6 @@ CREATE TABLE IF NOT EXISTS contract_leave_type (
     deleted_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS contract_leaves (
-    id_contract_leave UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_contract UUID NOT NULL,
-    id_leave_type UUID NOT NULL,
-    hours NUMERIC(10, 2),
-    hours_taken NUMERIC(10, 2),
-    FOREIGN KEY (id_contract) REFERENCES contract(id_contract),
-    FOREIGN KEY (id_leave_type) REFERENCES contract_leave_type(id_leave_type),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL
-);
-
 CREATE TABLE IF NOT EXISTS vacations (
     id_vacation UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     id_employee UUID NOT NULL,
@@ -230,7 +217,7 @@ CREATE TABLE IF NOT EXISTS trainings (
     id_employee UUID NOT NULL,
     id_training_type UUID NOT NULL,
     FOREIGN KEY (id_employee) REFERENCES employees(id_employee),
-    FOREIGN KEY (id_training_type) REFERENCES training_types(id_training_type),
+    FOREIGN KEY (id_training_type) REFERENCES training_types(id_training_type) ON DELETE CASCADE,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

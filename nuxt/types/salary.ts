@@ -10,7 +10,3 @@ export interface SalaryHistory {
     deleted_at: string | null;
     id_employee: string;
 }
-
-export interface SalaryHistoryListResponse {
-    salaryHistories: SalaryHistory[];
-}

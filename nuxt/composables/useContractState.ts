@@ -1,12 +1,15 @@
 import { useRuntimeConfig } from '#app';
-import type { ContractState, ContractStateListResponse } from '~/types/contractState';
+import type { ContractState, ContractStateContractParams, ContractStateContractResponse, ContractStateListResponse, ContractStateQueryParams } from '~/types/contractState';
 
 export function useContractState() {
     const { $toast } = useNuxtApp();
 
     const message = {
-        errorConnection: { severity: 'error', summary: 'Connection Error', detail: 'Check your connection.', life: 3000 },
-        errorGeneric: { severity: 'error', summary: 'Error', detail: 'An error occurred.', life: 3000 },
+        errorConnection: { severity: 'error', summary: 'Erro de Conexão', detail: 'Verifique a sua conexão.', life: 3000 },
+        errorGeneric: { severity: 'error', summary: 'Erro', detail: 'Ocorreu um erro.', life: 3000 },
+        successCreate: { severity: 'success', summary: 'Sucesso', detail: 'Estado de contrato criado com sucesso.', life: 3000 },
+        successUpdate: { severity: 'success', summary: 'Sucesso', detail: 'Estado de contrato atualizado com sucesso.', life: 3000 },
+        successDelete: { severity: 'success', summary: 'Sucesso', detail: 'Estado de contrato apagado com sucesso.', life: 3000 }
     };
 
     const getAuthHeaders = () => {
@@ -14,29 +17,45 @@ export function useContractState() {
         return token ? { Authorization: `Bearer ${token}` } : undefined;
     };
 
-    const getContractStates = async (): Promise<ContractStateListResponse> => {
+    const getSubFromToken = (): string | null => {
+        const token = localStorage.getItem('access_token');
+        if (!token) return null;
+
+        const payload = token.split('.')[1];
+        if (!payload) return null;
+
+        const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+
+        try {
+            const parsedPayload = JSON.parse(decodedPayload);
+            return parsedPayload.sub || null;
+        } catch (error) {
+            console.error('Erro ao decodificar o token:', error);
+            return null;
+        }
+    };
+
+    const getContractStates = async (params: ContractStateQueryParams): Promise<ContractStateListResponse> => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch<ContractStateListResponse>(
-                `${config.public.apiUrl}/api/contract_states/`,
-                {
-                    method: 'GET',
-                    headers: getAuthHeaders(),
-                }
-            );
+            const query = new URLSearchParams(Object.entries(params)).toString();
+            const response = await $fetch<ContractStateListResponse>(`${config.public.apiUrl}api/contract_states/?${query}`, {
+                method: 'GET',
+                headers: getAuthHeaders(),
+            });
 
-            return response || { contract_states: [] };
+            return response || { contract_states: [], total_count: 0 };
         } catch (error) {
             console.error(error);
             $toast.add(message.errorConnection);
-            return { contract_states: [] };
+            return { contract_states: [], total_count: 0 };
         }
     };
 
     const getContractState = async (id: string): Promise<ContractState | null> => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch<ContractState>(`${config.public.apiUrl}/api/contract_states/${id}`, {
+            const response = await $fetch<ContractState>(`${config.public.apiUrl}/api/contract_states/${id}/`, {
                 method: 'GET',
                 headers: getAuthHeaders(),
             });
@@ -52,7 +71,7 @@ export function useContractState() {
     const createContractState = async (data: any) => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch(`${config.public.apiUrl}/api/contract_states/`, {
+            const response = await $fetch(`${config.public.apiUrl}api/contract_states/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,7 +80,7 @@ export function useContractState() {
                 body: data,
             });
 
-            $toast.add({ severity: 'success', summary: 'Success', detail: 'Contract state created successfully.', life: 3000 });
+            $toast.add(message.successCreate);
             return response;
         } catch (error) {
             console.error(error);
@@ -73,7 +92,7 @@ export function useContractState() {
     const updateContractState = async (id: string, data: any) => {
         try {
             const config = useRuntimeConfig();
-            const response = await $fetch(`${config.public.apiUrl}/api/contract_states/${id}`, {
+            const response = await $fetch(`${config.public.apiUrl}api/contract_states/${id}/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,7 +101,7 @@ export function useContractState() {
                 body: data,
             });
 
-            $toast.add({ severity: 'success', summary: 'Success', detail: 'Contract state updated successfully.', life: 3000 });
+            $toast.add(message.successUpdate);
             return response;
         } catch (error) {
             console.error(error);
@@ -91,20 +110,43 @@ export function useContractState() {
         }
     };
 
-    const deleteContractState = async (id: string) => {
+    const deleteContractState = async (id: string, bulk: boolean) => {
         try {
             const config = useRuntimeConfig();
-            await $fetch(`${config.public.apiUrl}/api/contract_states/${id}`, {
+            await $fetch(`${config.public.apiUrl}api/contract_states/${id}/`, {
                 method: 'DELETE',
                 headers: getAuthHeaders(),
             });
 
-            $toast.add({ severity: 'success', summary: 'Success', detail: 'Contract state deleted successfully.', life: 3000 });
+            if (!bulk) $toast.add(message.successDelete);
+            return true;
         } catch (error) {
             console.error(error);
             $toast.add(message.errorGeneric);
+            return false;
         }
     };
 
-    return { getContractStates, getContractState, createContractState, updateContractState, deleteContractState };
+    const getContractStateContract = async (params: ContractStateContractParams | null): Promise<ContractStateContractResponse | null> => {
+        try {
+            const sub = getSubFromToken();
+            const config = useRuntimeConfig();
+            const query = params ? new URLSearchParams(Object.entries(params)).toString() : '';
+            const response = await $fetch<ContractStateContractResponse>(
+                `${config.public.apiUrl}api/contract_state_contracts/${sub}?${query}`,
+                {
+                    method: 'GET',
+                    headers: getAuthHeaders(),
+                }
+            );
+
+            return response;
+        } catch (error) {
+            console.error(error);
+            $toast.add(message.errorGeneric);
+            return null;
+        }
+    };
+
+    return { getContractStates, getContractState, createContractState, updateContractState, deleteContractState, getContractStateContract };
 }

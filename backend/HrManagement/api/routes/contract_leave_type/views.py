@@ -29,35 +29,51 @@ class ContractLeaveTypeViewSet(ViewSet):
         """
         List all contract leave types with optional filtering and pagination.
         """
-        leave_type = request.GET.get('leave_type', None)
-        limit = int(request.GET.get('limit', 10))
-        offset = int(request.GET.get('offset', 0))
+        order_by = request.GET.get('order_by', 'leave_type')
+        order_direction = request.GET.get('order_direction', 'ASC')
+        global_search = request.GET.get('global_search', None)
+        limit = request.GET.get('limit', None)
+        offset = request.GET.get('offset', None)
 
         with connection.cursor() as cursor:
             try:
-                cursor.execute(
-                    """
-                    SELECT id_leave_type, leave_type, description, is_paid
-                    FROM contract_leave_type
-                    WHERE (%s IS NULL OR leave_type ILIKE %s)
-                    LIMIT %s OFFSET %s;
-                    """,
-                    [leave_type, f"%{leave_type}%" if leave_type else None, limit, offset]
-                )
+                limit = int(limit) if limit else None
+                offset = int(offset) if offset else None
+
+                query = """
+                    SELECT *
+                    FROM get_all_contract_leave_types(
+                        %s::varchar,         -- global_search_param
+                        ARRAY[%s]::text[],   -- order_by_param
+                        ARRAY[%s]::text[],   -- order_direction_param
+                        %s::integer,         -- limit_param
+                        %s::integer          -- offset_param
+                    )
+                """
+                params = [global_search, order_by, order_direction, limit, offset]
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                contract_leave_types = []
+                total_count = rows[0][-1] if rows else 0  # Last field is total_count
+
+                for row in rows:
+                    contract_leave_types.append({
+                        'id_leave_type': row[0],
+                        'leave_type': row[1],
+                        'description': row[2],
+                        'is_paid': row[3]
+                    })
+
+                return Response({
+                    'contract_leave_types': contract_leave_types,
+                    'total_count': total_count
+                }, status=status.HTTP_200_OK)
+
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        contract_leave_types = [
-            {
-                'id_leave_type': row[0],
-                'leave_type': row[1],
-                'description': row[2],
-                'is_paid': row[3],
-            }
-            for row in rows
-        ]
-        return Response({'contract_leave_types': contract_leave_types}, status=status.HTTP_200_OK)
 
     @check_permission_decorator('view_contract_leave_type')
     def retrieve(self, request, pk=None):

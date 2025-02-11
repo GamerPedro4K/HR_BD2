@@ -8,7 +8,6 @@ DROP TABLE IF EXISTS employee_hierarchy cascade;
 DROP TABLE IF EXISTS certifications cascade;
 DROP TABLE IF EXISTS certificate_types cascade;
 DROP TABLE IF EXISTS vacations cascade;
-DROP TABLE IF EXISTS contract_leaves cascade;
 DROP TABLE IF EXISTS contract_leave_type cascade;
 DROP TABLE IF EXISTS contract_state_contract cascade;
 DROP TABLE IF EXISTS contract_state cascade;

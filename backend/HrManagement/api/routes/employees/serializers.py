@@ -38,6 +38,7 @@ class UpdateSerializer(serializers.Serializer):
         username = employee.get('username')
         email = employee['email']
         
+        
         with connection.cursor() as cursor:
             # 1) Verifica se já existe outro user com o mesmo username.
             if username:
@@ -76,7 +77,11 @@ class UpdateSerializer(serializers.Serializer):
         def not_empty(val):
             return val not in (None, "")
         
+        print("hiiiiiiiiiiiiiiiiii")
+        print(self.context['auth'])
+        
         validated_data['auth'] = self.context['auth']
+        
 
         employee = validated_data.get('employee', {})
         employee_address = validated_data.get('employee_address', {})
@@ -106,7 +111,7 @@ class UpdateSerializer(serializers.Serializer):
             with transaction.atomic():
                 with connection.cursor() as cursor:
                     # update table auth_user
-                    if not_empty(employee['password']):
+                    if not_empty(employee.get('password', '')):
                         cursor.execute("""
                             UPDATE auth_user
                             SET username = %s, password = %s, first_name = %s, last_name = %s, email = %s
@@ -151,20 +156,29 @@ class UpdateSerializer(serializers.Serializer):
                             INSERT INTO vacations (id_employee, start_date, end_date)
                             VALUES (%s, %s, %s)
                         """, [employee_id, vacations['start_date'], vacations['end_date']])
+                    else:
+                        cursor.execute("""
+                            DELETE FROM vacations
+                            WHERE id_employee = %s
+                            AND start_date >= NOW()
+                        """, [employee_id])
                     
                     # update table trainings
                     if trainings:
                         cursor.execute("""
                             DELETE FROM trainings
                             WHERE id_employee = %s
-                            AND start_date >= NOW()
                         """, [employee_id])
                         for training in trainings:
                             cursor.execute("""
                                 INSERT INTO trainings (id_employee, id_training_type, start_date, end_date)
                                 VALUES (%s, %s, %s, %s)
                             """, [employee_id, training['id_training_type'], training['start_date'], training['end_date']])
-
+                    else:
+                        cursor.execute("""
+                            DELETE FROM trainings
+                            WHERE id_employee = %s
+                        """, [employee_id])
                     # add row in contract
                     if contract:
                         cursor.execute("""
@@ -175,6 +189,11 @@ class UpdateSerializer(serializers.Serializer):
                         if not contract_id_row:
                             raise serializers.ValidationError("Erro ao criar o contrato.")
                         id_contract = contract_id_row[0]
+
+                        cursor.execute("""
+                            INSERT INTO contract_state_contract (id_contract, id_contract_state)
+                            VALUES (%s, %s)
+                        """, [id_contract, contract['id_contract_state']])
                         print(f"Contract ID: {id_contract}")
 
                     # add row in salary_history
@@ -201,9 +220,20 @@ class UpdateSerializer(serializers.Serializer):
                                     INSERT INTO certifications (id_employee, id_certificate_type, issuing_organization, issue_date, expiration_date)
                                     VALUES (%s, %s, %s, %s, %s)
                                 """, [employee_id, certificate['id_certificate_type'], certificate['issuing_organization'], certificate['issue_date'], certificate['expiration_date']])
+                    else:
+                        cursor.execute("""
+                            DELETE FROM certifications
+                            WHERE id_employee = %s
+                        """, [employee_id])
 
         except IntegrityError as e:
             print(e)
             raise serializers.ValidationError("Ocorreu um erro ao criar o utilizador.")
         
-        return UserObject(user_id=user_id, username=employee['username'], first_name=employee['first_name'], last_name=employee['last_name'], email=employee['email'])
+        return {
+            "id": user_id,
+            "username": employee['username'],
+            "first_name": employee['first_name'],
+            "last_name": employee['last_name'],
+            "email": employee['email'],
+        }

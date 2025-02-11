@@ -1,7 +1,7 @@
 import random
 from faker import Faker
 from api.utils.mongo_client import get_mongo_db
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import connection
 
 """
@@ -12,6 +12,7 @@ def seed(quantity=100):
     fake = Faker()
     db = get_mongo_db()
     attendance_collection = db['attendance']
+    quantity_days_prior = 3 # quantidade de dias anteriores para inserir registros
 
     with connection.cursor() as cursor:
         cursor.execute("SELECT id_employee FROM employees;")
@@ -22,37 +23,49 @@ def seed(quantity=100):
 
     quantity = min(quantity, len(employees))
 
-    today = datetime.now().date().isoformat()  
+    days = [(datetime.now() - timedelta(days=i)).date().isoformat() for i in range(quantity_days_prior)]
 
-    available_employees = [
-        emp for emp in employees
-        if not attendance_collection.find_one({"id_employee": emp, "date": today})
-    ]
-    for _ in range(quantity):
-        if not available_employees:
-            print("All employees already have records for today.")
-            break
+    counter = quantity_days_prior
+    total_records = quantity * quantity_days_prior
+    for day in days:
+        nonAvailableEmployees = attendance_collection.find({"date": day}, {"_id": 0, "id_employee": 1}).distinct("id_employee")
+        available_employees = [
+            emp for emp in employees
+            if not nonAvailableEmployees
+        ]
+        for _ in range(quantity):
+            if not available_employees:
+                counter -= 1
+                break
 
 
-        id_employee = random.choice(available_employees)
-        available_employees.remove(id_employee) 
+            id_employee = random.choice(available_employees)
+            available_employees.remove(id_employee) 
 
-        attendance = {
-            "id_employee": id_employee,
-            "date": today,
-            "sessions": [
-                {
-                    "checkin": fake.iso8601(),
-                    "checkout": fake.iso8601()
-                }
-            ]
-        }
-        attendance_collection.insert_one(attendance)
+            start_time = fake.date_time_this_decade()
+            end_time = fake.date_time_this_decade()
 
-        if (quantity >= 4) and ((_ + 1) % (quantity // 4) == 0):  # 25% checkpoints
-            print(f"Progress: {((_ + 1) / quantity) * 100:.0f}% completed.")
+            if start_time > end_time:
+                start_time, end_time = end_time, start_time
 
-    print(f"{quantity} registros inseridos na coleção 'attendance'.")
+
+            attendance = {
+                "id_employee": id_employee,
+                "date": day,
+                "sessions": [
+                    {
+                        "checkin": start_time.strftime("%H:%M:%S"),
+                        "checkout": end_time.strftime("%H:%M:%S")
+                    }
+                ]
+            }
+            attendance_collection.insert_one(attendance)
+
+            if counter % (total_records // 4) == 0:
+                print(f"Progress: {((counter / total_records) * 100):.0f}% completed.")
+
+    if counter == 0:  print("All employees already have records.") 
+    print(f"{quantity*counter} registros inseridos na coleção 'attendance'. (Quantidade de dias: {counter})")
 
 def delete(quantity=None):
     db = get_mongo_db()

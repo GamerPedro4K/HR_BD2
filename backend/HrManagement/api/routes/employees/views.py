@@ -124,8 +124,7 @@ class EmployeeViewSet(viewsets.ViewSet):
                 # Retrieve employee details
                 cursor.execute(
                     """
-                    SELECT * FROM get_employees_by_id(%s)
-                    ;
+                    SELECT * FROM get_employees_by_id(%s);
                     """,
                     [pk]
                 )
@@ -138,7 +137,7 @@ class EmployeeViewSet(viewsets.ViewSet):
                 cursor.execute(
                     """
                     SELECT c.id_contract, c.created_at, c.updated_at, ct.id_contract_type, ct.contract_type_name, ct.description
-                    FROM contract c
+                    FROM latest_contract_materialized_view c
                     INNER JOIN contract_type ct ON c.id_contract_type = ct.id_contract_type
                     WHERE c.id_employee = %s
                     ORDER BY c.created_at DESC
@@ -151,14 +150,12 @@ class EmployeeViewSet(viewsets.ViewSet):
                 # Retrieve contract state history
                 cursor.execute(
                     """
-                    SELECT csc.id_contract_state_contract, csc.id_contract_state, cs.state, cs.description, cs.hex_color, cs.icon
-                    FROM contract_state_contract csc
-                    INNER JOIN contract_state cs ON csc.id_contract_state = cs.id_contract_state
-                    WHERE csc.id_contract = %s
-                    ORDER BY csc.created_at DESC
+                    SELECT contract_state_contract.id_contract_state_contract, contract_state_contract.id_contract_state, contract_state.state, contract_state.description, contract_state.hex_color, contract_state.icon
+                    FROM contract_state_contract
+                    INNER JOIN contract_state ON contract_state_contract.id_contract_state = contract_state.id_contract_state
+                    ORDER BY contract_state_contract.created_at DESC
                     LIMIT 1;
-                    """,
-                    [contract[0]] if contract else [None]
+                    """
                 )
                 contract_state = cursor.fetchone()
 
@@ -231,27 +228,27 @@ class EmployeeViewSet(viewsets.ViewSet):
                 'zip_code': employee[20],
             },
             'contract': {
-                'id_contract': contract[0],
-                'created_at': contract[1],
+                'id_contract': contract[0] if contract else None,
+                'created_at': contract[1] if contract else None,
                 'salary': {
-                    'id:_salary': salary[0],
-                    'id_aproved_by': salary[1],
-                    'base_salary': salary[2],
-                    'extra_hour_rate': salary[3],
-                    'start_date': salary[4],
+                    'id:_salary': salary[0] if salary else None,
+                    'id_aproved_by': salary[1] if salary else None,
+                    'base_salary': salary[2] if salary else None,
+                    'extra_hour_rate': salary[3] if salary else None,
+                    'start_date': salary[4] if salary else None,
                 },
                 'contract_type': {
-                    'id_contract_type': contract[3],
-                    'contract_type_name': contract[4],
-                    'description': contract[5],
+                    'id_contract_type': contract[3] if contract else None,
+                    'contract_type_name': contract[4] if contract else None,
+                    'description': contract[5] if contract else None,
                 },
                 'contract_state': {
-                    'id_contract_state_contract': contract_state[0],
-                    'id_contract_state': contract_state[1],
-                    'state_name': contract_state[2],
-                    'description': contract_state[3],
-                    'hex_color': contract_state[4],
-                    'icon': contract_state[5],
+                    'id_contract_state_contract': contract_state[0] if contract_state else None,
+                    'id_contract_state': contract_state[1] if contract_state else None,
+                    'state_name': contract_state[2] if contract_state else None,
+                    'description': contract_state[3] if contract_state else None,
+                    'hex_color': contract_state[4] if contract_state else None,
+                    'icon': contract_state[5] if contract_state else None,
                 },
                 'role': {
                     'id_role': employee[7],
@@ -260,39 +257,39 @@ class EmployeeViewSet(viewsets.ViewSet):
                     'description': employee[10],
                 },
                 'department': {
-                    'id_department': department[0],
-                    'department_name': department[1],
-                    'description': department[2],
+                    'id_department': department[0] if department else None,
+                    'department_name': department[1] if department else None,
+                    'description': department[2] if department else None,
                 },
-                'created_at': contract[1],
+                'created_at': contract[1] if contract else None,
             },
             'trainings': [
                 {
-                    'id_training': training[0],
-                    'start_date': training[1],
-                    'end_date': training[2],
+                    'id_training': training[0] if training else None,
+                    'start_date': training[1] if training else None,
+                    'end_date': training[2] if training else None,
                     'training_type': {
-                        'id_training_type': training[3],
-                        'training_type_name': training[4],
-                        'description': training[5],
-                        'hours': training[6],
+                        'id_training_type': training[3] if training else None,
+                        'training_type_name': training[4] if training else None,
+                        'description': training[5] if training else None,
+                        'hours': training[6] if training else None,
                     }
-                } for training in trainings
+                } for training in trainings if trainings
             ],
             'certifications': [
                 {
-                    'id_certification': cert[0],
-                    'issue_date': cert[1],
-                    'expiration_date': cert[2],
+                    'id_certification': cert[0] if cert else None,
+                    'issue_date': cert[1] if cert else None,
+                    'expiration_date': cert[2] if cert else None,
                     'certificate_type': {
-                        'id_certificate_type': cert[3],
-                        'certificate_type_name': cert[4],
-                        'description': cert[5],
-                        'icon': cert[7],
-                        'hex_color': cert[8],
+                        'id_certificate_type': cert[3] if cert else None,
+                        'certificate_type_name': cert[4] if cert else None,
+                        'description': cert[5] if cert else None,
+                        'icon': cert[7] if cert else None,
+                        'hex_color': cert[8] if cert else None,
                     },
-                    'issuing_organization': cert[6],
-                } for cert in certifications
+                    'issuing_organization': cert[6] if cert else None,
+                } for cert in certifications if certifications
             ]
         }
 
@@ -303,6 +300,7 @@ class EmployeeViewSet(viewsets.ViewSet):
     Update an employee by id
     /employees/{id} 
     """
+    @check_permission_decorator('update_employee')
     def update(self, request, pk=None):
         with connection.cursor() as cursor:
             cursor.execute("SELECT id_auth_user, id_employee FROM employees WHERE id_employee = %s", [pk])
@@ -313,7 +311,7 @@ class EmployeeViewSet(viewsets.ViewSet):
 
         instance = EmployeeInstanceMock(id_auth_user, id_employee)
 
-        serializer = UpdateSerializer(data=request.data, instance=instance)
+        serializer = UpdateSerializer(data=request.data, instance=instance, context={'auth': request.auth})
         if serializer.is_valid():
             data = serializer.save()
             return Response(data, status=status.HTTP_200_OK)

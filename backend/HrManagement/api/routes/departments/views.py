@@ -26,84 +26,77 @@ class DepartmentViewSet(ViewSet):
 
     @check_permission_decorator('view_all_departments')
     def list(self, request):
-        """
-        List all departments along with their roles and associated training types.
-        """
-        
+        order_by = request.GET.get('order_by', 'name')
+        order_direction = request.GET.get('order_direction', 'ASC')
+        global_search = request.GET.get('global_search', None) 
+        limit = request.GET.get('limit', None)
+        offset = request.GET.get('offset', None)
+
         with connection.cursor() as cursor:
             try:
-                cursor.execute(
-                    """
-                    SELECT 
-                        d.id_department, 
-                        d.name AS department_name, 
-                        d.description AS department_description,
-                        r.id_role, 
-                        r.role_name, 
-                        r.hex_color, 
-                        r.description AS role_description,
-                        ttr.id_training_type, 
-                        tt.name AS training_type_name,
-                        tt.description AS training_type_description,
-                        tt.hours AS training_type_hours
-                    FROM 
-                        departments d
-                    LEFT JOIN 
-                        roles r ON d.id_department = r.id_department
-                    LEFT JOIN 
-                        training_type_role ttr ON r.id_role = ttr.id_role
-                    LEFT JOIN 
-                        training_types tt ON ttr.id_training_type = tt.id_training_type
-                    WHERE 
-                        d.deleted_at IS NULL
-                    ORDER BY 
-                        d.name, r.role_name
-                    """,
-                )
+                limit = int(limit) if limit else None
+                offset = int(offset) if offset else None
+
+                query = """
+                    SELECT *
+                    FROM get_all_departments(
+                        %s::varchar,         -- global_search_param
+                        ARRAY[%s]::text[],   -- order_by_param
+                        ARRAY[%s]::text[],   -- order_direction_param
+                        %s::integer,         -- limit_param
+                        %s::integer          -- offset_param
+                    )
+                """
+                params = [global_search, order_by, order_direction, limit, offset]
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                departments = {}
+                total_count = rows[0][-1] if rows else 0
+
+                for row in rows:
+                    department_id = row[0]
+                    if department_id not in departments:
+                        departments[department_id] = {
+                            'id_department': row[0],
+                            'name': row[1],
+                            'description': row[2],
+                            'roles': {}
+                        }
+
+                    role_id = row[3]
+                    if role_id and role_id not in departments[department_id]['roles']:
+                        departments[department_id]['roles'][role_id] = {
+                            'id_role': row[3],
+                            'role_name': row[4],
+                            'hex_color': row[5],
+                            'description': row[6],
+                            'training_types': []
+                        }
+
+                    if row[7]:  # If training type exists
+                        departments[department_id]['roles'][role_id]['training_types'].append({
+                            'id_training_type': row[7],
+                            'name': row[8],
+                            'description': row[9],
+                            'hours': row[10]
+                        })
+
+                for department in departments.values():
+                    department['roles'] = list(department['roles'].values())
+
+                department_list = list(departments.values())
+
+                return Response({
+                    'departments': department_list,
+                    'total_count': total_count
+                }, status=status.HTTP_200_OK)
+
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Group roles and their training types under their respective departments
-        departments = {}
-        for row in rows:
-            department_id = row[0]
-            if department_id not in departments:
-                departments[department_id] = {
-                    'id_department': row[0],
-                    'name': row[1],
-                    'description': row[2],
-                    'roles': {}
-                }
-            role_id = row[3]
-            if role_id and role_id not in departments[department_id]['roles']:
-                departments[department_id]['roles'][role_id] = {
-                    'id_role': row[3],
-                    'role_name': row[4],
-                    'hex_color': row[5],
-                    'description': row[6],
-                    'training_types': []
-                }
-            # Add training type information if it exists
-            if row[7]:  # If training type exists
-                departments[department_id]['roles'][role_id]['training_types'].append({
-                    'id_training_type': row[7],
-                    'name': row[8],
-                    'description': row[9],
-                    'hours': row[10],
-                })
-
-        # Convert roles dictionary to a list under each department
-        for department in departments.values():
-            department['roles'] = list(department['roles'].values())
-
-        # Convert departments dictionary to a list for the response
-        department_list = list(departments.values())
-
-        return Response({'departments': department_list}, status=status.HTTP_200_OK)
-
-
-    
+        
     @check_permission_decorator('view_department')
     def retrieve(self, request, pk=None):
         """

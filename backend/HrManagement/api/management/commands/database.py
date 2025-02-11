@@ -11,6 +11,210 @@ import io
 from pymongo import MongoClient
 from api.utils.mongo_client import get_mongo_db
 
+collections = [
+    {
+        "name": "attendance",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["id_employee", "date", "sessions"],
+                "properties": {
+                    "id_employee": {
+                        "bsonType": "string",
+                        "description": "ID do funcionário deve ser uma string representando um UUID válido."
+                    },
+                    "date": {
+                        "bsonType": "string",
+                        "pattern": "^(\\d{4})-(\\d{2})-(\\d{2})$",
+                        "description": "Data deve estar no formato ISO (yyyy-MM-dd)."
+                    },
+                    "sessions": {
+                        "bsonType": "array",
+                        "items": {
+                            "bsonType": "object",
+                            "required": ["checkin"],
+                            "properties": {
+                                "checkin": {
+                                    "bsonType": "string",
+                                    "pattern": "^(\\d{2}):(\\d{2}):(\\d{2})$",
+                                    "description": "Check-in deve ser uma string no formato ISO (HH:mm:ss)."
+                                },
+                                "checkout": {
+                                    "bsonType": ["string", "null"],
+                                    "pattern": "^(\\d{2}):(\\d{2}):(\\d{2})$",
+                                    "description": "Check-out deve ser uma string no formato ISO (HH:mm:ss)."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "name": "extrahours",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["id_employee", "date", "start", "end"],
+                "properties": {
+                    "id_employee": {
+                        "bsonType": "string",
+                        "description": "ID do funcionário deve ser uma string representando um UUID válido."
+                    },
+                    "date": {
+                        "bsonType": "string",
+                        "pattern": "^(\\d{4})-(\\d{2})-(\\d{2})$",
+                        "description": "Data deve estar no formato ISO (yyyy-MM-dd)."
+                    },
+                    "start": {
+                        "bsonType": "string",
+                        "pattern": "(\\d{2}):(\\d{2}):(\\d{2})$",
+                        "description": "Hora de início deve estar no formato ISO (HH:mm:ss)."
+                    },
+                    "end": {
+                        "bsonType": "string",
+                        "pattern": "(\\d{2}):(\\d{2}):(\\d{2})$",
+                        "description": "Hora de término deve estar no formato ISO (HH:mm:ss)."
+                    }
+                }
+            }
+        }
+    },
+     {
+        "name": "schedule",
+        "validator": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["id_employee", "workSchedule"],
+                "properties": {
+                    "id_employee": {
+                        "bsonType": "string",
+                        "description": "ID do funcionário deve ser uma string representando um UUID válido."
+                    },
+                    "workSchedule": {
+                        "bsonType": "object",
+                        "properties": {
+                            "monday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "tuesday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "wednesday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "thursday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "friday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "saturday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            },
+                            "sunday": {
+                                "bsonType": "object",
+                                "required": ["start", "end"],
+                                "properties": {
+                                    "start": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de início deve estar no formato HH:mm."
+                                    },
+                                    "end": {
+                                        "bsonType": "string",
+                                        "pattern": "^(\\d{2}):(\\d{2})$",
+                                        "description": "Hora de término deve estar no formato HH:mm."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+]
+
 class Command(BaseCommand):
     help = 'Executa arquivos SQL específicos ou todos os arquivos SQL dentro dos diretórios database/ ou database/functions/'
 
@@ -56,8 +260,7 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.SUCCESS("Base de dados PostgreSQL deletada com sucesso."))
 
                     db = get_mongo_db()
-                    collections = ["attendance", "extrahours", "schedule"]
-                    for collection_name in collections:
+                    for collection_name in collections['name']:
                         if collection_name in db.list_collection_names():
                             db[collection_name].drop()
                             self.stdout.write(self.style.SUCCESS(f"Coleção '{collection_name}' deletada do MongoDB."))
@@ -114,14 +317,22 @@ class Command(BaseCommand):
 
                     db = get_mongo_db()
 
-                    collections = ["attendance", "extrahours", "schedule"]
-
-                    for collection_name in collections:
+                    for collection in collections:
+                        collection_name = collection["name"]
+                        validator = collection["validator"]
+                        
                         if collection_name not in db.list_collection_names():
                             db.create_collection(collection_name)
-                            print(f"Coleção '{collection_name}' criada com sucesso.")
+                            db.command({
+                                "collMod": collection_name,
+                                "validator": validator,
+                                "validationLevel": "strict" 
+                            })
+                            self.stdout.write(self.style.SUCCESS(f"Coleção '{collection_name}' criada com sucesso com schema validator."))
                         else:
-                            print(f"Coleção '{collection_name}' já existe.")
+                            self.stdout.write(f"Coleção '{collection_name}' já existe.")
+
+                    
 
                 connection.commit()
                 self.stdout.write(self.style.SUCCESS("Todos os scripts SQL executados com sucesso."))
@@ -150,4 +361,4 @@ class Command(BaseCommand):
         call_command('migrate', stdout=io.StringIO(), stderr=io.StringIO())
         self.stdout.write(self.style.SUCCESS("Migrações criadas com sucesso."))
         
- 
+

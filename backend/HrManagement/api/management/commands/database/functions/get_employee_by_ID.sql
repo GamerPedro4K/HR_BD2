@@ -50,17 +50,15 @@ BEGIN
         employee_location.zip_code
     FROM employees
     INNER JOIN auth_user ON employees.id_auth_user = auth_user.id
-    LEFT JOIN contract ON employees.id_employee = contract.id_employee
-    LEFT JOIN latest_salary_materialized_view ON contract.id_contract = latest_salary_materialized_view.id_contract
-    LEFT JOIN latest_contract_materialized_view ON contract.id_contract = latest_contract_materialized_view.id_contract
-    LEFT JOIN roles ON contract.id_role = roles.id_role
+    LEFT JOIN latest_contract_materialized_view ON employees.id_employee = latest_contract_materialized_view.id_employee
+    LEFT JOIN latest_salary_materialized_view ON latest_contract_materialized_view.id_contract = latest_salary_materialized_view.id_contract
+    LEFT JOIN roles ON latest_contract_materialized_view.id_role = roles.id_role
     LEFT JOIN departments ON roles.id_department = departments.id_department
-    LEFT JOIN latest_contract_state_materialized_view ON contract.id_contract = latest_contract_state_materialized_view.id_contract
+    LEFT JOIN latest_contract_state_materialized_view ON latest_contract_materialized_view.id_contract = latest_contract_state_materialized_view.id_contract
     LEFT JOIN contract_state ON latest_contract_state_materialized_view.id_contract_state = contract_state.id_contract_state
     LEFT JOIN employee_location ON employees.id_employee = employee_location.id_employee
     WHERE
         employees.id_employee = param_employee_id AND
-        employees.deleted_at IS NULL AND
-        (latest_contract_materialized_view.id_contract = contract.id_contract OR latest_contract_materialized_view.id_contract IS NULL);
+        employees.deleted_at IS NULL;
 END;
 $$ LANGUAGE plpgsql;

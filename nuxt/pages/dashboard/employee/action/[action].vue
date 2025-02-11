@@ -43,23 +43,18 @@ const visibleVacation = ref(false);
 
 // # Declare editVariables
 const responseEmployee = ref<FindEmployee | null>();
-const responseSalary = ref<SalaryHistory | null>();
-
-
-const testes = ref<any>();
-
-
+const responseSalary = ref<SalaryHistory[] | null>();
 
 // # Declare functions
 const route = useRoute();
 const router = useRouter();
-const { getCertificationsType } = useCertification();
+const { getCertificateTypes } = useCertification();
 const { getTrainingType } = useTraining();
 const { getAllVacations } = useVacations();
 const { getContractTypes } = useContractType();
 const { getDepartments } = useDepartment();
 const { getContractStates } = useContractState();
-const { addEmployee, editEmployee, getEmployee } = useEmployee()
+const { addEmployee, getEmployee, editEmployee } = useEmployee()
 const { getSalaryHistory } = useSalaryHistory();
 
 // Check if the page is in edit mode
@@ -69,7 +64,7 @@ const isEditMode = (route.params.action === 'edit');
 CountryService.getCountries().then((data) => (countries.value = data));
 
 const getCertifications = async () => {
-    const response = await getCertificationsType();
+    const response = await getCertificateTypes({});
     certifications.value = response.certificate_types;
 };
 
@@ -103,7 +98,7 @@ const getContract = async () => {
 };
 
 const getDepartment = async () => {
-    const response = await getDepartments();
+    const response = await getDepartments({});
     departmentsList.value = response.departments.map((department) => ({
       label: department.name,
       code: department.id_department,
@@ -117,7 +112,7 @@ const getDepartment = async () => {
 };
 
 const getContractState = async () => {
-    const response = await getContractStates();
+    const response = await getContractStates({});
     contractStates.value = response.contract_states;
 };
 
@@ -152,6 +147,11 @@ const getEmployeeOnEdit = async () => {
   }
   try {
     responseEmployee.value = await getEmployee(route.query.id as string);
+    
+    if(responseEmployee.value == null){
+      await router.push('/dashboard/employee');
+    }
+    
     responseSalary.value = await getSalaryHistory(route.query.id as string);
     if (responseEmployee.value) {
       initialValues.value = {
@@ -170,24 +170,35 @@ const getEmployeeOnEdit = async () => {
         zip_code: responseEmployee.value.location.zip_code || '',
         city: responseEmployee.value.location.city || '',
         district: responseEmployee.value.location.district || '',
-        treinamentos: responseEmployee.value.trainings.map(t => ({
-          id_training_type: t.id_training,
-          start_date: new Date(t.start_date),
-          end_date: new Date(t.end_date),
-        })),
-        certificados: responseEmployee.value.certifications.map((c) => ({
-          id_certificate_type: c.id_certification,
-          name: c.certificate_type.certificate_type_name,
-          description: c.certificate_type.description,
-          issuing_organization: c.issuing_organization,
-          issue_date: c.issue_date,
-          expiration_date: c.expiration_date,
-        })),
-        /* vacations: vacations.value.filter((v: { employee_id: any; }) => v.employee_id === responseEmployee.value.id), */
-        role: {
-          value: responseEmployee.value.contract.role.id_role,
-          label: responseEmployee.value.contract.role.role_name,
-        },
+        certificados: responseEmployee.value.certifications.map((c) => {
+          const cert = certifications.value.find((cer:any) => cer.id_certificate_type === c.certificate_type.id_certificate_type);
+
+          if (cert) {
+            cert.issuing_organization = c.issuing_organization;
+            cert.issue_date = new Date(c.issue_date);
+            cert.expiration_date = c.expiration_date ? new Date(c.expiration_date) : null;
+            return cert
+          }
+        }),
+        treinamentos: responseEmployee.value.trainings.map((t) => {
+          const foundT = training.value.find((tr) => tr.id_training_type === t.training_type.id_training_type);
+
+          if (foundT) {
+            foundT.start_date = new Date(t.start_date);
+            foundT.end_date = new Date(t.end_date);
+            return foundT;
+          }
+          return null;
+        }),
+        role: responseEmployee.value 
+          ? departmentsList.value
+            .find((dept: { code: string; }) => {
+              return dept.code === responseEmployee.value?.contract.department.id_department;
+            })
+            ?.items.find((role: { value: string; }) => {
+              return role.value === responseEmployee.value?.contract.role.id_role;
+            }) || null
+          : null,
         contract_type: {
           ...responseEmployee.value.contract.contract_type,
         },
@@ -200,14 +211,6 @@ const getEmployeeOnEdit = async () => {
       };
       selectedContractType.value = contractType.value?.find((c) => c.id_contract_type === responseEmployee.value?.contract.contract_type.id_contract_type) || null;
       selectedContractState.value = contractStates.value.find((c) => c.id_contract_state === responseEmployee.value?.contract.contract_state.id_contract_state) || null;
-      /* testes.value = responseEmployee.value.certifications.map((c) => ({
-        id_certificate_type: c.id_certification,
-        name: c.certificate_type.certificate_type_name,
-        description: c.certificate_type.description,
-        issuing_organization: c.issuing_organization,
-        issue_date: c.issue_date,
-        expiration_date: c.expiration_date,
-      })); */
     }
   } catch (error) {
     console.log('Erro ao buscar dados do funcionário:', error);
@@ -233,11 +236,10 @@ updateLastBreadcrumbLabel(isEditMode ? 'Editar Funcionário' : 'Adicionar Funcio
 
 
 // Define Zod Schema
-const schema = z.object({
+const baseSchema = {
   first_name: z.string().min(1, 'Primeiro nome é obrigatório'),
   last_name: z.string().min(1, 'Último nome é obrigatório'),
   email: z.string().email('E-mail inválido').min(1, 'E-mail é obrigatório'),
-  password: z.string().min(6, 'Password deve ter no mínimo 6 caracteres'),
   phone: z.string().min(9, 'Telefone inválido'),
   img_src: z.string().url('URL da imagem inválida'),
   birth_date: z
@@ -261,16 +263,16 @@ const schema = z.object({
     })
   ),
   certificados: z
-  .array(
-    z.object({
-      id_certificate_type: z.string().min(1, 'O código é obrigatório'),
-      name: z.string().min(1, 'O nome é obrigatório'),
-      issuing_organization: z.string().min(1, 'A organização emissora é obrigatória'),
-      issue_date: z.date({ message: 'Data de emissão inválida' }),
-      expiration_date: z.date({ message: 'Data de expiração inválida' }).optional(),
-    })
-  )
-  .optional(),
+    .array(
+      z.object({
+        id_certificate_type: z.string().min(1, 'O código é obrigatório'),
+        name: z.string().min(1, 'O nome é obrigatório'),
+        issuing_organization: z.string().min(1, 'A organização emissora é obrigatória'),
+        issue_date: z.date({ message: 'Data de emissão inválida' }),
+        expiration_date: z.date({ message: 'Data de expiração inválida' }).optional(),
+      })
+    )
+    .optional(),
   vacations: z.any(),
   role: z.object({
     value: z.string({ required_error: 'O tipo de contrato é obrigatório' }),
@@ -283,11 +285,19 @@ const schema = z.object({
   }),
   base_salary: z.number().min(0, 'Salário base inválido'),
   extra_hour_rate: z.number().min(0, 'Valor por hora extra inválido'),
-  start_date: z.date({ message: 'Data de início inválida' }).refine((date) => date <= new Date(), 'Data de início não pode ser futura'),
-});
-
-
-const resolver = ref(zodResolver(schema));
+  start_date: z
+    .date({ message: 'Data de início inválida' })
+};
+const createSchema = () => {
+  if (isEditMode) {
+    return z.object(baseSchema);
+  }
+  return z.object({
+    ...baseSchema,
+    password: z.string().min(6, 'Password deve ter no mínimo 6 caracteres'),
+  });
+};
+const resolver = ref(zodResolver(createSchema()));
 
 const onSubmit = (all: any) => {
   console.log(toRaw(all))
@@ -296,6 +306,7 @@ const onSubmit = (all: any) => {
     const { values } = toRaw(all);
     const submissionData: EmployeeSubmission = {
       employee: {
+        id_employee: route.query.id as string || undefined,
         username: values.email,
         password: values.password,
         first_name: values.first_name,
@@ -303,7 +314,7 @@ const onSubmit = (all: any) => {
         email: values.email,
         phone: values.phone,
         img_src: values.img_src,
-        birth_date: formatDateRequest(values.birth_date), // Format birth_date
+        birth_date: formatDateRequest(values.birth_date) || "",
         id_group: 1,
       },
       employee_address: {
@@ -323,16 +334,16 @@ const onSubmit = (all: any) => {
         name: certificate.name,
         issuing_organization: certificate.issuing_organization,
         issue_date: formatDateRequest(certificate.issue_date),
-        expiration_date: formatDateRequest(certificate.expiration_date),
+        expiration_date: formatDateRequest(certificate.expiration_date) || null,
       })) || [],
       vacations: {
-        start_date: formatDateRequest(values.vacations[0]),
-        end_date: formatDateRequest(values.vacations[1]),
+        start_date: formatDateRequest(values.vacations?.[0]) || undefined,
+        end_date: formatDateRequest(values.vacations?.[1]) || undefined,
       },
       salary: {
         base_salary: values.base_salary,
         extra_hour_rate: values.extra_hour_rate,
-        start_date: formatDateRequest(values.start_date),
+        start_date: formatDateRequest(values.start_date) || "",
       },
       contract: {
         id_contract_type: values.contract_type?.id_contract_type || null,
@@ -342,7 +353,11 @@ const onSubmit = (all: any) => {
     };
 
     console.log("Formulário submetido:", submissionData);
-    const response = addEmployee(submissionData);
+    if(isEditMode){
+      const response = editEmployee(submissionData);
+    } else {
+      const response = addEmployee(submissionData);
+    }
   }
 };
 
@@ -359,10 +374,10 @@ const onChangeVacation = (value: any) => {
       ...vacations.value,
       { 
         id: 1, 
-        title: 'Férias do Novo Funcionário', 
+        title: 'Férias do Funcionário Atual', 
         start: value[0].toISOString().split('T')[0],
         end: value[1].toISOString().split('T')[0],
-        people: ['Novo Funcionário'],
+        people: ['Funcionário Atual'],
       }
     ]);
   }
@@ -411,7 +426,7 @@ watch(selectedContractState, (newValue, oldValue) => {
 let eventsServicePlugin = createEventsServicePlugin();
 
 calendarApp.value = createCalendar({
-  locale: 'pt-BR',
+  locale: 'pt-PT',
   isDark: isDarkTheme.value,
   selectedDate: new Date().toLocaleDateString("fr-CA"),
   firstDayOfWeek: 1,
@@ -460,25 +475,12 @@ calendarApp.value = createCalendar({
 
 </script>
 
-<style>
-.p-password-input {
-  width: 100%;
-}
-
-.sx-vue-calendar-wrapper {
-  height: 1000px;
-  width: 100%;
-}
-</style>
-
-
-
 <template>
   <h3 class="mb-3" v-if="!isEditMode">Adicionar Novo Funcionário</h3>
   <h3 class="mb-3" v-else>Editar Funcionário</h3>
   <BreadcrumbCustom :home="home" :breadcrumbs="breadcrumbs" />
   <div class="card mt-5">
-    <Form ref="formRef" v-slot="$form" :resolver="resolver" :initialValues="initialValues" @submit="onSubmit" class="w-full">
+    <Form ref="formRef" v-slot="$form" :resolver="resolver" :initialValues="initialValues" @submit="onSubmit"  class="w-full">
       <Stepper value="1" class="w-full">
         <StepList>
           <Step value="1">Dados Pessoais</Step>
@@ -686,10 +688,8 @@ calendarApp.value = createCalendar({
           <StepPanel v-slot="{ activateCallback }" value="3">
             <div class="card flex justify-center">
               <div class="flex flex-col gap-4 w-full">
-                {{ certifications }}
                 <div class="font-semibold text-xl">Certificados</div>
                 <MultiSelect 
-                :model-value="$form.certificados?.value"
                   name="certificados" 
                   :options="certifications" 
                   optionLabel="name" 
@@ -698,19 +698,17 @@ calendarApp.value = createCalendar({
                   fluid
                   :loading="certifications.length === 0" 
                 />
-                {{ $form.certificados?.value }}
                 <Message v-if="$form.certificados?.invalid" severity="error" size="small" variant="simple">{{ $form.certificados?.error?.message }}</Message>
 
                 <div v-for="(item, index) in $form.certificados?.value":key="index">
                   <div class="card training-card-padding" style="background-color: var(--surface-ground);">
-                    <div class="flex mb-1">
+                    <div class="flex items-center mb-1">
                       <div class="font-semibold text-xl">{{ item.name }}</div>
-                      <div class="text-sm ml-auto rounded-lg p-2 text-white" style="background-color: var(--primary-color);">
-                        {{ item }}
-                       <!--  <font-awesome :icon="item.data.icon" :style="{ color: slotProps.data.hex_color }" class="f-size-22 mr-4" /> -->
+                      <div class="text-sm ml-auto rounded-lg p-2 text-white d-center w-[40px] h-[40px]" :style="{ backgroundColor: item?.hex_color }"  >
+                        <font-awesome :icon="item?.icon"  class="f-size-22 m-1" />
                       </div>
                     </div>
-                    <div class="text-sm mb-3">{{ item.description }}</div>
+                    <div class="text-sm mt-2 mb-3">{{ item.description }}</div>
                     <div class="font-semibold text-sm mb-2">Organização Emissora</div>
                     <InputText
                       v-model="item.issuing_organization"
@@ -726,7 +724,7 @@ calendarApp.value = createCalendar({
                       fluid
                       :max-date="new Date()"
                     />
-                    <div class="font-semibold text-sm mb-2 mt-1">Data Expiração</div>
+                    <div class="font-semibold text-sm mb-2 mt-1">Data Expiração*</div>
                     <DatePicker
                       v-model="item.expiration_date"
                       placeholder="Introduza a Data de Expiração"
@@ -815,7 +813,7 @@ calendarApp.value = createCalendar({
                   <div v-if="isEditMode" class="card training-card-padding" >
                     <div class="font-semibold text-xl">Histórico de Salários</div>
                     <DataTable 
-                      :value="responseSalary" 
+                      :value="responseSalary || []" 
                       dataKey="id_salary_history" 
                       tableStyle="min-width: 50rem" 
                       scrollable 
@@ -961,7 +959,7 @@ calendarApp.value = createCalendar({
                   <div class="font-semibold text-xl">Férias:</div>
                   <Button label="Adicionar" icon="pi pi-plus" severity="success" @click="visibleVacation = true" />
                 </div>
-                <ClientOnly>
+                <ClientOnly >
                       <ScheduleXCalendar v-if="calendarApp" :calendar-app="calendarApp" ></ScheduleXCalendar>
                 </ClientOnly>
               </div>
@@ -994,5 +992,9 @@ calendarApp.value = createCalendar({
 }
 .training-card-padding {
   padding: 15px !important;
+}
+.sx-vue-calendar-wrapper {
+  height: 1000px;
+  width: 100%;
 }
 </style>

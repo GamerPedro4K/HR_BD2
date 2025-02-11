@@ -30,34 +30,49 @@ class TypeBenefitViewSet(ViewSet):
         """
         List all type benefits with optional filtering and pagination.
         """
-        name = request.GET.get('name', None)
-        limit = int(request.GET.get('limit', 10))
-        offset = int(request.GET.get('offset', 0))
+        order_by = request.GET.get('order_by', 'name')
+        order_direction = request.GET.get('order_direction', 'ASC')
+        global_search = request.GET.get('global_search', None)
+        limit = request.GET.get('limit', None)
+        offset = request.GET.get('offset', None)
 
         with connection.cursor() as cursor:
             try:
-                cursor.execute(
-                    """
-                    SELECT id_type_benefit, name, description
-                    FROM type_benefit
-                    WHERE (%s IS NULL OR name ILIKE %s)
-                    LIMIT %s OFFSET %s;
-                    """,
-                    [name, f"%{name}%" if name else None, limit, offset]
-                )
+                limit = int(limit) if limit else None
+                offset = int(offset) if offset else None
+
+                query = """
+                    SELECT *
+                    FROM get_all_type_benefits(
+                        %s::varchar,         -- global_search_param
+                        ARRAY[%s]::text[],   -- order_by_param
+                        ARRAY[%s]::text[],   -- order_direction_param
+                        %s::integer,         -- limit_param
+                        %s::integer          -- offset_param
+                    )
+                """
+                params = [global_search, order_by, order_direction, limit, offset]
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                type_benefits = []
+                total_count = rows[0][-1] if rows else 0  # Last field is total_count
+
+                for row in rows:
+                    type_benefits.append({
+                        'id_type_benefit': row[0],
+                        'name': row[1],
+                        'description': row[2]
+                    })
+
+                return Response({
+                    'type_benefits': type_benefits,
+                    'total_count': total_count
+                }, status=status.HTTP_200_OK)
+
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        type_benefits = [
-            {
-                'id_type_benefit': row[0],
-                'name': row[1],
-                'description': row[2],
-            }
-            for row in rows
-        ]
-        return Response({'type_benefits': type_benefits}, status=status.HTTP_200_OK)
     
     
     @check_permission_decorator('view_type_benefit')

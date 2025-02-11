@@ -3,7 +3,15 @@ import type { FindEmployee } from '~/types/employee';
 import { useRouter, useRoute } from 'vue-router'; 
 import Profile from '~/components/employee/Profile.vue';
 import Attendance from '~/components/employee/Attendance.vue';
-import Saidas from '~/components/employee/Saidas.vue';
+import Schedule from '~/components/employee/Schedule.vue';
+import Salary from '~/components/employee/Salary.vue';
+import { useContractState } from '~/composables/useContractState';
+import ContractState from '~/components/employee/ContractState.vue';
+import type { AttendanceInterfaceResponse } from '~/types/attendance';
+import type { ScheduleInterface } from '~/types/schedule';
+import type { SalaryHistory } from '~/types/salary';
+import type { ContractStateContractResponse } from '~/types/contractState';
+
 
 //routing 
 const route = useRoute();
@@ -14,9 +22,21 @@ const { breadcrumbs, home } = useBreadcrumb();
 
 // Refs for managing employee
 const employee = ref<FindEmployee>();
+const attendance = ref<AttendanceInterfaceResponse>({
+    data: [],
+    count: 0
+});
+const schedule = ref<ScheduleInterface[]>();
+const salary = ref<SalaryHistory[]>([]);
+const contractState = ref<ContractStateContractResponse>({
+    data: [],
+    count: 0
+});
 
 // Fetch employee function
-const { getEmployee } = useEmployee();
+const { getEmployee, getEmployeeAtendance, getEmployeeSchedule } = useEmployee();
+const { getSalaryHistory } = useSalaryHistory();
+const { getContractStateContract } = useContractState();
 
 const loadEmployees = async () => {
     const response = await getEmployee(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
@@ -27,7 +47,50 @@ const loadEmployees = async () => {
         router.push('/dashboard/employee');
 };
 
+const loadEmployeeAtendance = async () => {
+    const response = await getEmployeeAtendance(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id, { limit: 10, offset: 1 });
+    
+    if(response)
+        attendance.value = response;
+    else
+        router.push('/dashboard/employee');
+};
+
+const loadEmployeeSchedule = async () => {
+    const response = await getEmployeeSchedule(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+    
+    if(response)
+        schedule.value = response;
+    else
+        router.push('/dashboard/employee');
+};
+
+const loadEmployeeSalary = async () => {
+    const response = await getSalaryHistory(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
+    
+    if(response)
+        salary.value = response;
+    else
+        router.push('/dashboard/employee');
+};
+
+const loadEmployeeContractState = async () => {
+    const response = await getContractStateContract({
+        limit: 10,  
+        offset: 0,  
+    });
+
+    if(response)
+        contractState.value = response;
+    else
+        router.push('/dashboard/employee');
+};
+
 await loadEmployees();
+await loadEmployeeAtendance();
+await loadEmployeeSchedule();
+await loadEmployeeSalary();
+await loadEmployeeContractState();
 
 
 const selectedMenuItem = ref<string>('Perfil');
@@ -49,10 +112,24 @@ const items = ref([
         },
     },
     {
-        label: 'Saidas',
+        label: 'Agenda',
         icon: 'pi pi-calendar-times',
         command: () => {
-            selectedMenuItem.value = 'Saidas';
+            selectedMenuItem.value = 'Agenda';
+        },
+    },
+    {
+        label: 'Salário',
+        icon: 'pi pi-dollar',
+        command: () => {
+            selectedMenuItem.value = 'Salário';
+        },
+    },
+    {
+        label: 'Estado da conta',
+        icon: 'pi pi-file-check',
+        command: () => {
+            selectedMenuItem.value = 'Estado da conta';
         },
     },
 ]);
@@ -83,7 +160,7 @@ const items = ref([
                     <h2 class="text-lg font-bold text-gray-800">{{ employee?.employee_name}}</h2>
                     <p class="flex items-center text-gray-600 mt-2">
                         <i class="pi pi-briefcase mr-1.5" style="font-size: 1.5rem"></i>
-                        {{ employee?.department_name}}
+                        {{ employee?.contract.role.role_name }}
                     </p>
                     <p class="flex items-center text-gray-600 mt-2">
                         <i class="pi pi-at mr-1.5" style="font-size: 1.5rem"></i>
@@ -91,7 +168,7 @@ const items = ref([
                     </p>
                 </div>
             </div>
-            <div>b</div>
+            <!-- TODO: faça um botaão que chame Check IN e de pois mude para Checkout quando for -->
         </div>
         <hr>
         <div class="flex justify-start">
@@ -112,15 +189,21 @@ const items = ref([
                     </template>
                 </PanelMenu>
             </div>
-            <div class="ml-2">
+            <div class="ml-2 flex-grow">
                 <div v-if="selectedMenuItem === 'Perfil'" class="">
                     <Profile :json="employee"></Profile>
                 </div>
                 <div v-else-if="selectedMenuItem === 'Comparecimento'" class="mt-2">
-                    <Attendance :id="employee?.id"></Attendance>
+                    <Attendance :attendance="attendance"></Attendance>
                 </div>
-                <div v-else-if="selectedMenuItem === 'Saidas'" class="mt-2">
-                    <Saidas :id="employee?.id"></Saidas>
+                <div v-else-if="selectedMenuItem === 'Agenda'" class="mt-2">
+                    <Schedule :schedule="schedule"></Schedule>
+                </div>
+                <div v-else-if="selectedMenuItem === 'Salário'" class="mt-2">
+                    <Salary :salary="salary"></Salary>
+                </div>
+                <div v-else-if="selectedMenuItem === 'Estado da conta'" class="mt-2">
+                    <ContractState :contractStates="contractState"></ContractState>
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   textToCopy: {
-    type: String,
+    type: [String, Number],
     required: true,
   },
 });
