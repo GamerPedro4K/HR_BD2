@@ -25,6 +25,8 @@ export function usePaymentMethod() {
 
             return response || { payment_methods: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { payment_methods: [], total_count: 0 };
@@ -41,6 +43,8 @@ export function usePaymentMethod() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -62,6 +66,8 @@ export function usePaymentMethod() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Método de pagamento criado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -83,6 +89,8 @@ export function usePaymentMethod() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Método de pagamento atualizado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -97,10 +105,12 @@ export function usePaymentMethod() {
                 headers: getAuthHeaders(),
             });
 
-            if(!bulk)
+            if (!bulk)
                 $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Método de pagamento excluído', life: 3000 });
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return false;

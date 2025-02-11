@@ -25,6 +25,8 @@ export function useSalaryHistory() {
 
             return response || [];
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return [];
@@ -41,6 +43,8 @@ export function useSalaryHistory() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -62,6 +66,8 @@ export function useSalaryHistory() {
             $toast.add({ severity: 'success', summary: 'Success', detail: 'Salary history created successfully.', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -86,6 +92,8 @@ export function useSalaryHistory() {
             $toast.add({ severity: 'success', summary: 'Success', detail: 'Salary history updated successfully.', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -102,6 +110,8 @@ export function useSalaryHistory() {
 
             $toast.add({ severity: 'success', summary: 'Success', detail: 'Salary history deleted successfully.', life: 3000 });
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
         }

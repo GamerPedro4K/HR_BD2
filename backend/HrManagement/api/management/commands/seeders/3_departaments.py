@@ -16,13 +16,14 @@ CREATE TABLE IF NOT EXISTS departments (
  """
 
 departments = [
+    # (name, description, ROLES(CARGOS))
     ("Human Resources", "Handles employee-related services and compliance.", "HR Manager"),
     ("Finance", "Manages company finances, budgets, and payroll.", "Payroll Manager"),
     ("IT", "Maintains IT infrastructure and security.", "System Administrator"),
-    ("Marketing", "Oversees branding, campaigns, and promotions.", None),
-    ("Sales", "Drives revenue through client acquisition and retention.", None),
-    ("Operations", "Ensures efficient day-to-day operations.", None),
-    ("Legal", "Handles legal matters and compliance.", None),
+    ("Marketing", "Oversees branding, campaigns, and promotions.", "Marketing"),
+    ("Sales", "Drives revenue through client acquisition and retention.", "Sales"),
+    ("Operations", "Ensures efficient day-to-day operations.", "Operations"),
+    ("Legal", "Handles legal matters and compliance.", "Legal"),
 ]
     
 def seed(quantity):

@@ -43,7 +43,6 @@ PERMISSIONS = [
     ## Funcionários
     ("view_all_employees", "Pode visualizar todos os funcionários"),
     ("view_employee", "Pode visualizar um funcionário"),
-    ("view_employee_contracts", "Pode visualizar os contratos de funcionários"),
     ("create_employee", "Pode criar um funcionário"),
     ("update_employee", "Pode atualizar um funcionário"),
     

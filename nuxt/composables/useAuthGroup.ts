@@ -3,6 +3,8 @@ import type { AuthGroup, AuthGroupFormData, AuthGroupListResponse, AuthGroupQuer
 
 export function useAuthGroup() {
     const { $toast } = useNuxtApp();
+    const router = useRouter();
+
 
     const message = {
         errorConnection: {
@@ -53,6 +55,8 @@ export function useAuthGroup() {
 
             return response || { auth_groups: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { auth_groups: [], total_count: 0 };
@@ -69,6 +73,8 @@ export function useAuthGroup() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -90,6 +96,8 @@ export function useAuthGroup() {
             $toast.add(message.successCreate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error('Error creating group:', error);
             $toast.add(message.errorGeneric);
             throw error;
@@ -111,6 +119,8 @@ export function useAuthGroup() {
             $toast.add(message.successUpdate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error('Error updating group:', error);
             $toast.add(message.errorGeneric);
             throw error;
@@ -125,10 +135,12 @@ export function useAuthGroup() {
                 headers: getAuthHeaders(),
             });
 
-            if(!bulk)
+            if (!bulk)
                 $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Grupo excluído', life: 3000 });
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return false;

@@ -30,6 +30,8 @@ export function useRoles() {
 
             return response || { roles: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { roles: [], total_count: 0 };
@@ -46,6 +48,8 @@ export function useRoles() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -67,6 +71,8 @@ export function useRoles() {
             $toast.add(message.successAdd);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorAdd);
             return null;
@@ -88,6 +94,8 @@ export function useRoles() {
             $toast.add(message.successUpdate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorUpdate);
             return null;
@@ -105,6 +113,8 @@ export function useRoles() {
             $toast.add(message.successDelete);
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorDelete);
             return false;

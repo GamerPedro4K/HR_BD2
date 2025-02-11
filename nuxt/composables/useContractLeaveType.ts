@@ -3,6 +3,8 @@ import type { ContractLeaveType, ContractLeaveTypeListResponse, ContractLeaveTyp
 
 export function useContractLeaveType() {
     const { $toast } = useNuxtApp();
+    const router = useRouter();
+
 
     const message = {
         errorConnection: { severity: 'error', summary: 'Ocorreu um erro', detail: 'Verifique conexão', life: 3000 },
@@ -25,6 +27,8 @@ export function useContractLeaveType() {
 
             return response || { contract_leave_types: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { contract_leave_types: [], total_count: 0 };
@@ -41,6 +45,8 @@ export function useContractLeaveType() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -62,6 +68,8 @@ export function useContractLeaveType() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de licença criado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -83,6 +91,8 @@ export function useContractLeaveType() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de licença atualizado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -97,10 +107,12 @@ export function useContractLeaveType() {
                 headers: getAuthHeaders(),
             });
 
-            if(!bulk)
+            if (!bulk)
                 $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de licença excluído', life: 3000 });
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return false;

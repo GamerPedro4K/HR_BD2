@@ -109,7 +109,7 @@ const checkButton = () => {
                 <span>HrManagement</span>
             </NuxtLink>
         </div>
-
+        
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
                 <div class="relative">

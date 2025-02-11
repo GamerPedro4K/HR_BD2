@@ -3,6 +3,8 @@ import type { ContractType, ContractTypeListResponse, ContractTypeQueryParams } 
 
 export function useContractType() {
     const { $toast } = useNuxtApp();
+    const router = useRouter();
+
 
     const message = {
         errorConnection: { severity: 'error', summary: 'Ocorreu um erro', detail: 'Verifique conexão', life: 3000 },
@@ -14,7 +16,7 @@ export function useContractType() {
         return token ? { Authorization: `Bearer ${token}` } : undefined;
     };
 
-   
+
     const getContractTypes = async (params: ContractTypeQueryParams): Promise<ContractTypeListResponse> => {
         try {
             const config = useRuntimeConfig();
@@ -26,13 +28,15 @@ export function useContractType() {
 
             return response || { contract_types: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             return { contract_types: [], total_count: 0 };
         }
     };
 
 
-    const getContractType = async (id: string): Promise<ContractType | null>   => {
+    const getContractType = async (id: string): Promise<ContractType | null> => {
         try {
             const config = useRuntimeConfig();
             const response = await $fetch<ContractType>(`${config.public.apiUrl}/api/contract_types/${id}/`, {
@@ -42,6 +46,8 @@ export function useContractType() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -63,6 +69,8 @@ export function useContractType() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de contrato criado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -84,6 +92,8 @@ export function useContractType() {
             $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de contrato atualizado', life: 3000 });
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -98,10 +108,12 @@ export function useContractType() {
                 headers: getAuthHeaders(),
             });
 
-            if(!bulk)
+            if (!bulk)
                 $toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de contrato excluído', life: 3000 });
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return false;

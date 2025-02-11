@@ -3,6 +3,8 @@ import type { ContractState, ContractStateContractParams, ContractStateContractR
 
 export function useContractState() {
     const { $toast } = useNuxtApp();
+    const router = useRouter();
+
 
     const message = {
         errorConnection: { severity: 'error', summary: 'Erro de Conexão', detail: 'Verifique a sua conexão.', life: 3000 },
@@ -46,6 +48,8 @@ export function useContractState() {
 
             return response || { contract_states: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { contract_states: [], total_count: 0 };
@@ -62,6 +66,8 @@ export function useContractState() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -83,6 +89,8 @@ export function useContractState() {
             $toast.add(message.successCreate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -104,6 +112,8 @@ export function useContractState() {
             $toast.add(message.successUpdate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -121,6 +131,8 @@ export function useContractState() {
             if (!bulk) $toast.add(message.successDelete);
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return false;
@@ -142,6 +154,8 @@ export function useContractState() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;

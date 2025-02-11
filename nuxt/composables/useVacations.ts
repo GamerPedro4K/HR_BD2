@@ -26,6 +26,8 @@ export function useVacations() {
 
             return { vacations: response };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { vacations: [] };
@@ -43,6 +45,8 @@ export function useVacations() {
 
             return { vacations: response };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { vacations: [] };
@@ -61,6 +65,8 @@ export function useVacations() {
             $toast.add(message.successCreate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -79,6 +85,8 @@ export function useVacations() {
             $toast.add(message.successUpdate);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -96,6 +104,8 @@ export function useVacations() {
             $toast.add(message.successDelete);
             return true;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return false;

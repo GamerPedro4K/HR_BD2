@@ -50,7 +50,7 @@ def seed(quantity=100):
             cursor.execute(
                 """
                 INSERT INTO auth_user (id, username, password, first_name, last_name, email, is_superuser, is_staff, is_active, date_joined)
-                VALUES (1, 'benno', %s, 'pedro', 'benno', 'pedro@example.com', True, True, True, CURRENT_TIMESTAMP);
+                VALUES (1, 'benno', %s, 'pedro', 'benno', 'pedro@example.com', False, False, True, CURRENT_TIMESTAMP);
                 """,
                 [passw]
             )

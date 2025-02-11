@@ -118,7 +118,7 @@ const handleDeleteRole = async (id: string) => {
            </IconField>
            <div>
                <NuxtLink to="/dashboard/departments/action/add">
-                   <Button label="Adicionar" icon="pi pi-plus" class="mr-2" />
+                   <Button label="Adicionar" icon="pi pi-plus" class="mr-2"  v-tooltip.top="'Enter your username'"  />
                </NuxtLink>
                <Button label="Desativar" icon="pi pi-ban" class="mr-2" severity="warn" outlined :disabled="!selectedDepartments || !selectedDepartments.length" />
                <Button label="Exportar" icon="pi pi-upload" class="mr-2" severity="secondary" @click="exportCSV" />
@@ -190,7 +190,7 @@ const handleDeleteRole = async (id: string) => {
                            <template #body="roleProps">
                                <div class="flex items-center gap-2">
                                    {{ roleProps.data.training_types.length }} Treinamentos
-                                   <NuxtLink :to="`/dashboard/roles/${roleProps.data.id_role}`" class="button-class" >
+                                   <NuxtLink :to="`/dashboard/trainings/`" class="button-class" >
                                        <Button 
                                            icon="pi pi-search" 
                                            variant="text" 

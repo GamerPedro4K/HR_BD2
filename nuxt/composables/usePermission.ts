@@ -27,6 +27,8 @@ export function usePermission() {
 
             return response || { permissions: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return { permissions: [], total_count: 0 };
@@ -51,6 +53,8 @@ export function usePermission() {
             $toast.add(message.successAdd);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;
@@ -71,10 +75,12 @@ export function usePermission() {
                     permission_ids: Array.isArray(permission_ids) ? permission_ids : [permission_ids]
                 },
             });
-    
+
             $toast.add(message.successRemove);
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorGeneric);
             return null;

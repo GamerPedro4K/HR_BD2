@@ -4,6 +4,7 @@ import type { ScheduleInterface } from '~/types/schedule';
 import type { AttendanceInterfaceResponse, AttendanceInterfaceParams } from '~/types/attendance';
 import { any } from 'zod';
 export function useEmployee() {
+    const router = useRouter();
     const { $toast } = useNuxtApp();
 
     enum isCheckedHandler { checked_in, checked_out, error, loading };
@@ -54,6 +55,7 @@ export function useEmployee() {
 
             return isCheckedIn;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
             console.error(error);
             isCheckedIn = isCheckedHandler.error;
             $toast.add(message.errorConnection);
@@ -71,7 +73,9 @@ export function useEmployee() {
             });
 
             return response || { employees: [], total_count: 0 };
+
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
             console.error(error);
             $toast.add(message.errorConnection);
             return { employees: [], total_count: 0 };
@@ -88,6 +92,9 @@ export function useEmployee() {
 
             return response;
         } catch (error) {
+
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -96,22 +103,24 @@ export function useEmployee() {
 
     const addEmployee = async (data: EmployeeSubmission) => {
         try {
-          const config = useRuntimeConfig();
-          const response = await $fetch(`${config.public.apiUrl}auth/register/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeaders(),
-            },
-            body: data,
-          });
-    
-          $toast.add(message.successAdd);
-          return response;
+            const config = useRuntimeConfig();
+            const response = await $fetch(`${config.public.apiUrl}auth/register/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(),
+                },
+                body: data,
+            });
+
+            $toast.add(message.successAdd);
+            return response;
         } catch (error) {
-          console.error(error);
-          $toast.add(message.errorAdd);
-          return null;
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
+            console.error(error);
+            $toast.add(message.errorAdd);
+            return null;
         }
     };
 
@@ -119,23 +128,25 @@ export function useEmployee() {
         try {
             const config = useRuntimeConfig();
             const response = await $fetch(`${config.public.apiUrl}api/employees/${data.employee.id_employee}/`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders(),
-              },
-              body: data,
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(),
+                },
+                body: data,
             });
-      
+
             $toast.add(message.successAdd);
             return response;
         } catch (error) {
-          console.error(error);
-          $toast.add(message.errorAdd);
-          return null;
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
+            console.error(error);
+            $toast.add(message.errorAdd);
+            return null;
         }
     };
-    
+
     const getEmployeeAtendance = async (id: string, params: AttendanceInterfaceParams): Promise<AttendanceInterfaceResponse | null> => {
         try {
             const config = useRuntimeConfig();
@@ -147,6 +158,8 @@ export function useEmployee() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -163,6 +176,8 @@ export function useEmployee() {
 
             return response;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             $toast.add(message.errorConnection);
             return null;
@@ -185,6 +200,8 @@ export function useEmployee() {
             isCheckedIn = checked_in ? isCheckedHandler.checked_out : isCheckedHandler.checked_in;
             return isCheckedIn;
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             isCheckedIn = isCheckedHandler.error;
             $toast.add(message.errorConnection);

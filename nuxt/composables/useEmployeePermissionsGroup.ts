@@ -3,6 +3,8 @@ import type { EmployeePermissionsQueryParams, EmployeePermissionsResponse } from
 
 export function useEmployeePermissionsGroup() {
     const { $toast } = useNuxtApp();
+    const router = useRouter();
+
 
     const message = {
         errorConnection: { severity: 'error', summary: 'Ocorreu um erro', detail: 'Verifique conexão', life: 3000 },
@@ -25,6 +27,8 @@ export function useEmployeePermissionsGroup() {
 
             return response || { employees: [], total_count: 0 };
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             console.error(error);
             return { employees: [], total_count: 0 };
         }

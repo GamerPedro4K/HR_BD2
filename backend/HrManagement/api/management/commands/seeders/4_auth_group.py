@@ -1,6 +1,7 @@
 from django.db import connection
 
 groups = [
+    # (name, description)
     ("HR Manager", "Group responsible for managing all HR functionalities."),
     ("Recruitment Specialist", "Group focused on hiring processes and managing candidates."),
     ("Payroll Manager", "Group that handles employee payments, deductions, and bonuses."),
@@ -11,6 +12,10 @@ groups = [
     ("Benefits Coordinator", "Group focused on managing employee benefits."),
     ("System Administrator", "Group responsible for overseeing the HR management system."),
     ("Devolper", "Software developer"),
+    ("Marketing", "Group responsible for managing marketing campaigns."),
+    ("Sales", "Group responsible for managing sales and client acquisition."),
+    ("Operations", "Group responsible for managing day-to-day operations."),
+    ("Legal", "Group responsible for managing legal documentation and compliance."),
 ]
 
 def seed(quantity):

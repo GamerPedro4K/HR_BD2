@@ -30,6 +30,8 @@ export function useAnalytics() {
             return response;
         } catch (error) {
             console.error(error);
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             $toast.add(message.errorConnection);
             return null;
         }

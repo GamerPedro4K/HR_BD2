@@ -6,4 +6,4 @@ FROM get_all_contract_leave_types(
     5,                            -- limit_param (limitar a 5 resultados)
     0                             -- offset_param (começar do primeiro resultado)
 );
-``
+

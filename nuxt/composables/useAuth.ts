@@ -18,23 +18,23 @@ export function useAuth() {
 
 
     const getSubFromToken = (): string | null => {
-            const token = localStorage.getItem('access_token');
-            if (!token) return null;
-    
-            const payload = token.split('.')[1];
-            if (!payload) return null;
-    
-    
-            const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    
-            try {
-                const parsedPayload = JSON.parse(decodedPayload);
-                return parsedPayload.sub || null;
-            } catch (error) {
-                console.error('Erro ao decodificar o token:', error);
-                return null;
-            }
-        };
+        const token = localStorage.getItem('access_token');
+        if (!token) return null;
+
+        const payload = token.split('.')[1];
+        if (!payload) return null;
+
+
+        const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+
+        try {
+            const parsedPayload = JSON.parse(decodedPayload);
+            return parsedPayload.sub || null;
+        } catch (error) {
+            console.error('Erro ao decodificar o token:', error);
+            return null;
+        }
+    };
 
     const login = async (email: string, password: string) => {
         try {
@@ -62,6 +62,8 @@ export function useAuth() {
                 return true;
             }
         } catch (error) {
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             $toast.add(message.errorConnection);
             $loadingIndicator.finish({ error: true });
             return false;
@@ -91,14 +93,14 @@ export function useAuth() {
                 localStorage.setItem('access_token', data.value.access);
                 return true;
             }
-            
+
             return false;
         } catch {
             return false;
         }
     };
 
-    const isTokenValid = async () =>  {
+    const isTokenValid = async () => {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) return false;
 
@@ -125,30 +127,32 @@ export function useAuth() {
     const getUserPermissions = async (): Promise<string[]> => {
         try {
             const config = useRuntimeConfig();
-            const { data, error } = await useFetch<{ permissions: string[] }>(`${config.public.apiUrl}api/user_permissions/`, {
+            const data = await $fetch<{ permissions: string[] }>(`${config.public.apiUrl}api/user_permissions/`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
                 },
             });
 
-            if (error.value) {
-                throw new Error('Falha ao obter permissões');
-            }
 
-            permissions.value = data.value?.permissions || [];
+            permissions.value = data.permissions || [];
             return permissions.value;
-        } catch (err) {
-            console.error('Erro ao obter permissões:', err);
+        } catch (error) {
+            console.error('Erro ao obter permissões:', error);
+            if ((error as any).response?.status === 403) { router.replace('/pages/forbidden'); }
+
             permissions.value = [];
             return [];
         }
     };
 
-    const hasPermission = (permission: string): boolean => {
-        return permissions.value.includes(permission);
+    const hasPermission = (permission: string | string[]): boolean => {
+        if (Array.isArray(permission)) {
+            return permission.some(perm => permissions.value.includes(perm));
+        } else {
+            return permissions.value.includes(permission);
+        }
     };
-    
 
     return { login, logout, isTokenValid, getUserPermissions, hasPermission, getSubFromToken };
 }
